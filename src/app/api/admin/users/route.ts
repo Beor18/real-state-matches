@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         stripe_customer_id,
         created_at,
         updated_at,
-        subscriptions!left (
+        subscriptions!subscriptions_user_id_fkey (
           id,
           plan_type,
           plan_name,

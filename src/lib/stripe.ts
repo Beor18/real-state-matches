@@ -1,4 +1,5 @@
 import Stripe from 'stripe'
+import { createClient } from '@/lib/supabase/server'
 
 // Server-side Stripe client - lazy initialization
 let stripeInstance: Stripe | null = null
@@ -21,7 +22,22 @@ export const stripe = {
   get webhooks() { return getStripe().webhooks },
 }
 
-// Stripe price IDs for subscription plans
+// Database plan structure
+export interface SubscriptionPlan {
+  id: string
+  plan_key: string
+  name: string
+  description: string | null
+  price_monthly: number
+  price_yearly: number
+  stripe_price_monthly: string | null
+  stripe_price_yearly: string | null
+  features: string[]
+  is_active: boolean
+  sort_order: number
+}
+
+// Fallback Stripe price IDs for subscription plans (used when DB is not available)
 export const STRIPE_PRICES = {
   starter: {
     monthly: process.env.STRIPE_PRICE_STARTER || 'price_starter_monthly',
@@ -49,9 +65,78 @@ export const STRIPE_PRICES = {
 export type PlanType = keyof typeof STRIPE_PRICES
 export type BillingInterval = 'monthly' | 'yearly'
 
-// Helper to get price ID
+// Cache for plans loaded from database
+let plansCache: SubscriptionPlan[] | null = null
+let plansCacheExpiry: number = 0
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+// Load plans from database
+export async function loadPlansFromDatabase(): Promise<SubscriptionPlan[]> {
+  // Check cache first
+  if (plansCache && Date.now() < plansCacheExpiry) {
+    return plansCache
+  }
+
+  try {
+    const supabase = await createClient()
+    const { data: plans, error } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+
+    if (error) {
+      console.error('Error loading plans from database:', error)
+      return []
+    }
+
+    plansCache = plans || []
+    plansCacheExpiry = Date.now() + CACHE_TTL
+    return plansCache
+  } catch (error) {
+    console.error('Error loading plans:', error)
+    return []
+  }
+}
+
+// Clear plans cache (useful after updating plans)
+export function clearPlansCache(): void {
+  plansCache = null
+  plansCacheExpiry = 0
+}
+
+// Helper to get price ID - now with database support
+export async function getPriceIdFromDatabase(
+  planKey: string, 
+  interval: BillingInterval
+): Promise<string | null> {
+  const plans = await loadPlansFromDatabase()
+  const plan = plans.find(p => p.plan_key === planKey)
+  
+  if (plan) {
+    return interval === 'yearly' 
+      ? plan.stripe_price_yearly 
+      : plan.stripe_price_monthly
+  }
+  
+  // Fallback to static config
+  const staticPlan = STRIPE_PRICES[planKey as PlanType]
+  if (staticPlan) {
+    return staticPlan[interval]
+  }
+  
+  return null
+}
+
+// Legacy helper to get price ID (synchronous, uses static config)
 export function getPriceId(plan: PlanType, interval: BillingInterval): string {
   return STRIPE_PRICES[plan][interval]
+}
+
+// Get plan details by key
+export async function getPlanByKey(planKey: string): Promise<SubscriptionPlan | null> {
+  const plans = await loadPlansFromDatabase()
+  return plans.find(p => p.plan_key === planKey) || null
 }
 
 // Helper to create or get Stripe customer

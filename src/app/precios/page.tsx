@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -22,14 +22,20 @@ import {
 
 interface Plan {
   id: string
+  plan_key: string
   name: string
-  description: string
-  price: number
-  yearlyPrice: number
+  description: string | null
+  price_monthly: number
+  price_yearly: number
   features: string[]
-  popular: boolean
-  icon: typeof Star
-  color: string
+  popular?: boolean
+}
+
+// Icon mapping based on plan key
+const planIcons: Record<string, typeof Star> = {
+  starter: Sparkles,
+  pro: Star,
+  vip: Crown,
 }
 
 export default function PreciosPage() {
@@ -37,62 +43,30 @@ export default function PreciosPage() {
   const router = useRouter()
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly')
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+  const [plans, setPlans] = useState<Plan[]>([])
+  const [loadingPlans, setLoadingPlans] = useState(true)
 
-  const plans: Plan[] = [
-    {
-      id: 'starter',
-      name: 'Starter',
-      description: 'Para explorar opciones',
-      price: 29,
-      yearlyPrice: 24,
-      features: [
-        '5 búsquedas de propiedades/mes',
-        'Matching por estilo de vida',
-        'Alertas de nuevas propiedades',
-        'Soporte por email',
-      ],
-      popular: false,
-      icon: Sparkles,
-      color: 'from-slate-500 to-slate-600',
-    },
-    {
-      id: 'pro',
-      name: 'Pro',
-      description: 'La opción más elegida',
-      price: 49,
-      yearlyPrice: 39,
-      features: [
-        'Búsquedas ilimitadas',
-        'Matching avanzado inteligente',
-        'Alertas en tiempo real',
-        'Análisis de mercado por zona',
-        'Proyecciones de valorización',
-        'Reportes PDF detallados',
-        'Soporte prioritario',
-      ],
-      popular: true,
-      icon: Star,
-      color: 'from-emerald-500 to-teal-600',
-    },
-    {
-      id: 'vip',
-      name: 'VIP',
-      description: 'Para inversores serios',
-      price: 99,
-      yearlyPrice: 79,
-      features: [
-        'Todo lo del plan Pro',
-        'Acceso anticipado a propiedades',
-        'Consultoría mensual 1:1 (30 min)',
-        'Análisis de portafolio completo',
-        'Acceso a comunidad exclusiva',
-        'Soporte dedicado 24/7',
-      ],
-      popular: false,
-      icon: Crown,
-      color: 'from-amber-500 to-orange-600',
-    },
-  ]
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const res = await fetch('/api/plans')
+        const data = await res.json()
+        if (data.success) {
+          // Mark 'pro' as popular
+          const plansWithPopular = data.plans.map((plan: Plan) => ({
+            ...plan,
+            popular: plan.plan_key === 'pro',
+          }))
+          setPlans(plansWithPopular)
+        }
+      } catch (error) {
+        console.error('Error fetching plans:', error)
+      } finally {
+        setLoadingPlans(false)
+      }
+    }
+    fetchPlans()
+  }, [])
 
   const handleSubscribe = async (planId: string) => {
     if (!user) {
@@ -249,92 +223,101 @@ export default function PreciosPage() {
         {/* Plans Grid - White background */}
         <section className="py-16 md:py-20 bg-white">
           <div className="max-w-5xl mx-auto px-6">
-            <div className="grid md:grid-cols-3 gap-6">
-              {plans.map((plan, index) => (
-                <motion.div
-                  key={plan.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={plan.popular ? 'md:-mt-8' : ''}
-                >
-                  <Card className={`h-full border-0 transition-all shadow-lg ${
-                    plan.popular 
-                      ? 'ring-2 ring-emerald-500 shadow-xl' 
-                      : 'hover:shadow-xl'
-                  }`}>
-                    {plan.popular && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-slate-900 text-white px-4 py-1">
-                          Más Popular
-                        </Badge>
-                      </div>
-                    )}
-                    <CardHeader className="text-center pt-10 pb-4">
-                      <div className={`h-14 w-14 mx-auto rounded-xl bg-slate-100 flex items-center justify-center mb-4`}>
-                        <plan.icon className={`h-7 w-7 ${plan.popular ? 'text-emerald-600' : 'text-slate-600'}`} />
-                      </div>
-                      <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
-                      <CardDescription className="text-slate-500">{plan.description}</CardDescription>
-                      <div className="pt-6">
-                        <div className="flex items-baseline justify-center gap-1">
-                          <span className="text-5xl font-bold text-slate-900">
-                            ${billingInterval === 'monthly' ? plan.price : plan.yearlyPrice}
-                          </span>
-                          <span className="text-slate-400">/mes</span>
-                        </div>
-                        {billingInterval === 'yearly' && (
-                          <p className="text-xs text-emerald-600 font-medium mt-2">
-                            Facturado anualmente (${plan.yearlyPrice * 12})
-                          </p>
+            {loadingPlans ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-3 gap-6">
+                {plans.map((plan, index) => {
+                  const PlanIcon = planIcons[plan.plan_key] || Star
+                  return (
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className={plan.popular ? 'md:-mt-8' : ''}
+                    >
+                      <Card className={`h-full border-0 transition-all shadow-lg ${
+                        plan.popular 
+                          ? 'ring-2 ring-emerald-500 shadow-xl' 
+                          : 'hover:shadow-xl'
+                      }`}>
+                        {plan.popular && (
+                          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                            <Badge className="bg-slate-900 text-white px-4 py-1">
+                              Más Popular
+                            </Badge>
+                          </div>
                         )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-6 pb-8">
-                      <ul className="space-y-3">
-                        {plan.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-start gap-3 text-sm">
-                            <CheckCircle className={`h-5 w-5 shrink-0 ${plan.popular ? 'text-emerald-600' : 'text-slate-400'}`} />
-                            <span className="text-slate-600">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <Button
-                        className={`w-full gap-2 h-12 rounded-xl ${
-                          plan.popular ? 'bg-slate-900 hover:bg-slate-800' : ''
-                        }`}
-                        variant={plan.popular ? 'default' : 'outline'}
-                        onClick={() => {
-                          if (subscription?.plan_type === plan.id) {
-                            handleManageSubscription()
-                          } else {
-                            handleSubscribe(plan.id)
-                          }
-                        }}
-                        disabled={loadingPlan === plan.id}
-                      >
-                        {loadingPlan === plan.id ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Procesando...
-                          </>
-                        ) : subscription?.plan_type === plan.id ? (
-                          <>
-                            <CheckCircle className="h-4 w-4" />
-                            Plan Actual
-                          </>
-                        ) : (
-                          <>
-                            Elegir {plan.name}
-                            <ArrowRight className="h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
+                        <CardHeader className="text-center pt-10 pb-4">
+                          <div className={`h-14 w-14 mx-auto rounded-xl bg-slate-100 flex items-center justify-center mb-4`}>
+                            <PlanIcon className={`h-7 w-7 ${plan.popular ? 'text-emerald-600' : 'text-slate-600'}`} />
+                          </div>
+                          <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
+                          <CardDescription className="text-slate-500">{plan.description}</CardDescription>
+                          <div className="pt-6">
+                            <div className="flex items-baseline justify-center gap-1">
+                              <span className="text-5xl font-bold text-slate-900">
+                                ${billingInterval === 'monthly' ? plan.price_monthly : plan.price_yearly}
+                              </span>
+                              <span className="text-slate-400">/mes</span>
+                            </div>
+                            {billingInterval === 'yearly' && (
+                              <p className="text-xs text-emerald-600 font-medium mt-2">
+                                Facturado anualmente (${plan.price_yearly * 12})
+                              </p>
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-6 pb-8">
+                          <ul className="space-y-3">
+                            {plan.features.map((feature, idx) => (
+                              <li key={idx} className="flex items-start gap-3 text-sm">
+                                <CheckCircle className={`h-5 w-5 shrink-0 ${plan.popular ? 'text-emerald-600' : 'text-slate-400'}`} />
+                                <span className="text-slate-600">{feature}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          <Button
+                            className={`w-full gap-2 h-12 rounded-xl ${
+                              plan.popular ? 'bg-slate-900 hover:bg-slate-800' : ''
+                            }`}
+                            variant={plan.popular ? 'default' : 'outline'}
+                            onClick={() => {
+                              if (subscription?.plan_type === plan.plan_key) {
+                                handleManageSubscription()
+                              } else {
+                                handleSubscribe(plan.plan_key)
+                              }
+                            }}
+                            disabled={loadingPlan === plan.plan_key}
+                          >
+                            {loadingPlan === plan.plan_key ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Procesando...
+                              </>
+                            ) : subscription?.plan_type === plan.plan_key ? (
+                              <>
+                                <CheckCircle className="h-4 w-4" />
+                                Plan Actual
+                              </>
+                            ) : (
+                              <>
+                                Elegir {plan.name}
+                                <ArrowRight className="h-4 w-4" />
+                              </>
+                            )}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </section>
 

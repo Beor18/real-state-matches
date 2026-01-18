@@ -13,7 +13,9 @@ import {
   LogOut,
   Home,
   Brain,
-  Database
+  Database,
+  CreditCard,
+  Package
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -27,6 +29,8 @@ const navItems = [
   { href: '/admin/modules', label: 'Módulos', icon: Puzzle },
   { href: '/admin/ai', label: 'Configuración IA', icon: Brain },
   { href: '/admin/property-providers', label: 'Proveedores de Datos', icon: Database },
+  { href: '/admin/subscriptions', label: 'Suscripciones', icon: CreditCard },
+  { href: '/admin/plans', label: 'Planes', icon: Package },
   { href: '/admin/users', label: 'Usuarios', icon: Users },
   { href: '/admin/settings', label: 'Configuración', icon: Settings },
 ]
