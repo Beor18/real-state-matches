@@ -1,0 +1,268 @@
+// Real Estate Intelligence Ecosystem - Prisma Schema
+// MVP para Puerto Rico y Latam
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Extended User Model
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String?
+  avatar          String?
+  phone           String?
+  role            String   @default("user") // user, admin, agent
+  isVip           Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  lifestyleProfile LifestyleProfile?
+  subscriptions    Subscription[]
+  alerts           Alert[]
+  propertyMatches  PropertyMatch[]
+}
+
+// Property Listings (from IDX/MLS)
+model Property {
+  id              String   @id @default(cuid())
+  mlsId           String   @unique
+  title           String
+  description     String
+  address         String
+  city            String
+  state           String
+  zipCode         String?
+  country         String   @default("PR")
+
+  // Property Details
+  propertyType    String   // house, condo, apartment, land, commercial
+  listingType     String   @default("sale") // sale, rent
+  price           Float
+  bedrooms        Int?
+  bathrooms       Float?
+  squareFeet      Float?
+  lotSize         Float?
+  yearBuilt       Int?
+
+  // Amenities & Features
+  amenities       String   // JSON array
+  features        String   // JSON array
+
+  // Media
+  images          String   // JSON array of URLs
+  virtualTourUrl  String?
+  videoUrl        String?
+
+  // Location
+  latitude        Float?
+  longitude       Float?
+  neighborhood    String?
+
+  // Agent Info
+  agentName       String?
+  agentEmail      String?
+  agentPhone      String?
+  agentCompany    String?
+
+  // Status
+  status          String   @default("active") // active, pending, sold, off_market
+  featured        Boolean  @default(false)
+
+  // AI Embeddings for Lifestyle Matching
+  embedding       String?  // pgvector stored as text for SQLite
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  predictions     PropertyPrediction[]
+  matches         PropertyMatch[]
+  viralContents   ViralContent[]
+}
+
+// Predictions for Demand & Equity
+model PropertyPrediction {
+  id              String   @id @default(cuid())
+  propertyId      String
+  property        Property @relation(fields: [propertyId], references: [id])
+
+  // Demand Prediction
+  demandScore     Float    // 0-100 score
+  demandTrend     String   // increasing, stable, decreasing
+  demandReason    String?
+
+  // Migration Patterns
+  migrationTrend  String?  // influx, stable, outflow
+  fanbaseSentiment Float  // -1 to 1 sentiment score
+
+  // Equity Forecast
+  currentValue    Float
+  predictedValue1Y Float   // 1 year prediction
+  predictedValue3Y Float   // 3 year prediction
+  predictedValue5Y Float   // 5 year prediction
+  predictedValue10Y Float  // 10 year prediction
+  confidenceLevel Float    // confidence percentage
+
+  // ROI Recommendations
+  remodelTips     String   // JSON array of tips with ROI
+  zoningInfo       String?
+  developmentOpportunities String?
+
+  // Hot Zone Indicators
+  isHotZone       Boolean  @default(false)
+  isUndervalued   Boolean  @default(false)
+  undervaluationReason String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// User Lifestyle Profile for Matching
+model LifestyleProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+
+  // User's Ideal Life Description
+  idealLifeDescription String
+  lifestyleKeywords    String   // JSON array
+
+  // Preferences
+  preferredPropertyTypes String  // JSON array
+  preferredCities       String   // JSON array
+  budgetMin            Float?
+  budgetMax            Float?
+  bedrooms              Int?
+  bathrooms             Float?
+  squareFeetMin         Float?
+  squareFeetMax         Float?
+
+  // Lifestyle Features
+  mustHaveAmenities     String   // JSON array
+  lifestylePriorities   String   // JSON array
+
+  // AI Embedding
+  embedding             String?  // pgvector stored as text
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// Property Match Scores for Users
+model PropertyMatch {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  propertyId      String
+  property        Property @relation(fields: [propertyId], references: [id])
+
+  // Match Scoring
+  matchScore      Float    // 0-100
+  matchReasons    String   // JSON array of reasons
+  lifestyleFit    String   // excellent, good, fair, poor
+
+  // User Interaction
+  viewed          Boolean  @default(false)
+  favorited       Boolean  @default(false)
+  contactedAgent Boolean  @default(false)
+  notes           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, propertyId])
+}
+
+// Subscription Plans
+model Subscription {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+
+  // Plan Details
+  planType        String   // basic, premium, vip
+  planName        String   // "Starter $29", "Pro $49", etc.
+  price           Float
+  interval        String   // monthly, yearly
+
+  // Payment
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  stripePriceId   String?
+
+  // Status
+  status          String   // active, canceled, past_due, trial
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean  @default(false)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Viral Content Generated by AI
+model ViralContent {
+  id              String   @id @default(cuid())
+  contentType     String   // post, story, live_script, video_script
+
+  // Content
+  title           String
+  content         String
+  hook            String?
+  hashtags        String   // JSON array
+
+  // Targeting
+  targetAudience  String
+  propertyType    String?
+  location        String?
+
+  // Performance Predictions
+  viralScore      Float    // 0-100 predicted engagement
+  predictedReach  Int?
+
+  // Status
+  status          String   @default("draft") // draft, scheduled, published, archived
+  publishedAt     DateTime?
+
+  // Relations
+  propertyId      String?
+  property        Property? @relation(fields: [propertyId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Alerts for Users
+model Alert {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+
+  type            String   // price_drop, new_listing, hot_zone, viral_content, custom
+  title           String
+  message         String
+
+  // Alert Criteria
+  criteria        String?  // JSON object with criteria
+
+  // Action
+  actionUrl       String?
+  actionLabel     String?
+
+  // Status
+  isRead          Boolean  @default(false)
+  readAt          DateTime?
+
+  // Priority
+  priority        String   @default("medium") // low, medium, high, urgent
+
+  createdAt       DateTime @default(now())
+}
