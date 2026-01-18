@@ -1,11 +1,12 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import Link from 'next/link'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { ModuleSection } from '@/components/modules/ModuleWrapper'
 import { useModules } from '@/hooks/useModules'
 import DemandPredictionEngine from '@/components/reai/DemandPredictionEngine'
@@ -13,7 +14,6 @@ import EquityForecast from '@/components/reai/EquityForecast'
 import {
   Home,
   Search,
-  Heart,
   Sparkles,
   ArrowRight,
   CheckCircle,
@@ -23,17 +23,62 @@ import {
   Menu,
   X,
   MapPin,
-  Clock,
-  Shield,
+  Zap,
+  Brain,
+  Target,
   TrendingUp,
   LineChart,
+  Clock,
+  Shield,
+  Crown,
+  ChevronRight,
+  Play,
+  Mail,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+// Animated text that types out
+function TypewriterText({ words, className }: { words: string[]; className?: string }) {
+  const [currentWordIndex, setCurrentWordIndex] = useState(0)
+  const [currentText, setCurrentText] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    const word = words[currentWordIndex]
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        if (currentText.length < word.length) {
+          setCurrentText(word.slice(0, currentText.length + 1))
+        } else {
+          setTimeout(() => setIsDeleting(true), 2000)
+        }
+      } else {
+        if (currentText.length > 0) {
+          setCurrentText(word.slice(0, currentText.length - 1))
+        } else {
+          setIsDeleting(false)
+          setCurrentWordIndex((prev) => (prev + 1) % words.length)
+        }
+      }
+    }, isDeleting ? 50 : 100)
+
+    return () => clearTimeout(timeout)
+  }, [currentText, isDeleting, currentWordIndex, words])
+
+  return (
+    <span className={className}>
+      {currentText}
+      <span className="animate-pulse">|</span>
+    </span>
+  )
+}
 
 export default function LandingPage() {
   const { user, signOut, isLoading: authLoading } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { isEnabled } = useModules()
+  const { scrollYProgress } = useScroll()
+  const headerOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0.95])
   
   const hasActiveModules = isEnabled('demand-prediction') || isEnabled('equity-forecast')
 
@@ -43,95 +88,144 @@ export default function LandingPage() {
     { href: '/precios', label: 'Precios' },
   ]
 
-  const benefits = [
+  const stats = [
+    { value: '2,500+', label: 'Propiedades analizadas' },
+    { value: '98%', label: 'Clientes satisfechos' },
+    { value: '<2min', label: 'Para encontrar matches' },
+    { value: '24/7', label: 'Siempre disponible' },
+  ]
+
+  const steps = [
     {
-      icon: Heart,
-      title: 'Matching Personalizado',
-      description: 'Describe tu estilo de vida ideal y nuestra IA encuentra las propiedades perfectas para ti.',
+      icon: Brain,
+      title: 'Describe tu vida ideal',
+      description: 'Cuéntanos cómo imaginas tu día a día perfecto.',
     },
     {
-      icon: Clock,
-      title: 'Ahorra Tiempo',
-      description: 'En lugar de buscar entre cientos de listados, recibe solo las opciones que realmente te interesan.',
+      icon: Zap,
+      title: 'Análisis instantáneo',
+      description: 'Procesamos tu perfil contra miles de propiedades.',
     },
     {
-      icon: Shield,
-      title: 'Decisiones Informadas',
-      description: 'Accede a análisis de mercado y proyecciones para tomar la mejor decisión de inversión.',
+      icon: Target,
+      title: 'Matches personalizados',
+      description: 'Recibe propiedades que realmente encajan contigo.',
+    },
+  ]
+
+  const plans = [
+    {
+      name: 'Starter',
+      price: 29,
+      description: 'Para comenzar',
+      features: ['5 búsquedas/mes', 'Matching básico', 'Alertas email'],
+      color: 'border-slate-200',
+    },
+    {
+      name: 'Pro',
+      price: 49,
+      description: 'Más popular',
+      features: ['Búsquedas ilimitadas', 'Matching avanzado', 'Proyecciones plusvalía', 'Soporte prioritario'],
+      popular: true,
+      color: 'border-emerald-500',
+    },
+    {
+      name: 'VIP',
+      price: 99,
+      description: 'Para inversores',
+      features: ['Todo de Pro', 'Consultoría 1:1', 'Acceso anticipado', 'Comunidad exclusiva'],
+      color: 'border-amber-500',
     },
   ]
 
   const testimonials = [
     {
       name: 'María González',
+      role: 'Compradora',
       location: 'San Juan, PR',
-      text: 'Encontré mi apartamento ideal en Condado en solo 2 semanas. El matching por estilo de vida fue clave.',
+      text: 'Encontré mi apartamento ideal en Condado en solo 2 semanas. El matching por estilo de vida cambió todo.',
       avatar: 'M',
     },
     {
       name: 'Carlos Rodríguez',
+      role: 'Inversionista',
       location: 'Dorado, PR',
-      text: 'Como inversionista, las predicciones de plusvalía me ayudaron a tomar una decisión informada.',
+      text: 'Las predicciones de plusvalía me dieron la confianza para invertir. Ya tengo 3 propiedades.',
       avatar: 'C',
     },
     {
       name: 'Ana Martínez',
-      location: 'Guaynabo, PR',
-      text: 'El proceso fue tan simple. Solo describí cómo quería vivir y me mostraron exactamente lo que buscaba.',
+      role: 'Nómada Digital',
+      location: 'Rincón, PR',
+      text: 'Describí que quería surf y trabajo remoto. Me encontraron exactamente eso cerca de la playa.',
       avatar: 'A',
     },
   ]
 
+  const fadeInUp = {
+    initial: { opacity: 0, y: 30 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true },
+    transition: { duration: 0.6 },
+  }
+
+  const staggerContainer = {
+    initial: {},
+    whileInView: { transition: { staggerChildren: 0.1 } },
+    viewport: { once: true },
+  }
+
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 via-white to-slate-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-white/90 backdrop-blur-md">
-        <div className="container mx-auto px-4 py-4">
+    <div className="min-h-screen flex flex-col bg-white">
+      {/* Header - Minimal & Clean */}
+      <motion.header 
+        style={{ opacity: headerOpacity }}
+        className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100"
+      >
+        <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                <Home className="h-5 w-5 text-white" />
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg bg-slate-900 flex items-center justify-center">
+                <Home className="h-4.5 w-4.5 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900">
-                  Hogar<span className="text-emerald-600">AI</span>
-                </h1>
-              </div>
+              <span className="text-lg font-semibold tracking-tight text-slate-900">
+                Hogar<span className="text-emerald-600">AI</span>
+              </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden md:flex items-center gap-8">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors"
+                  className="text-sm text-slate-600 hover:text-slate-900 transition-colors"
                 >
                   {item.label}
                 </Link>
               ))}
             </nav>
 
-            {/* Auth & Mobile Menu */}
+            {/* Auth Buttons */}
             <div className="flex items-center gap-3">
               {!authLoading && (
                 <>
                   {user ? (
                     <div className="hidden md:flex items-center gap-2">
                       <Link href="/dashboard">
-                        <Button variant="ghost" size="sm" className="gap-2">
-                          <User className="h-4 w-4" />
-                          Mi Cuenta
+                        <Button variant="ghost" size="sm" className="text-slate-600">
+                          <User className="h-4 w-4 mr-2" />
+                          Dashboard
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="icon" onClick={() => signOut()}>
+                      <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-slate-400">
                         <LogOut className="h-4 w-4" />
                       </Button>
                     </div>
                   ) : (
                     <Link href="/auth/login" className="hidden md:block">
-                      <Button size="sm" variant="outline">
+                      <Button variant="ghost" size="sm" className="text-slate-600">
                         Iniciar Sesión
                       </Button>
                     </Link>
@@ -140,9 +234,9 @@ export default function LandingPage() {
               )}
 
               <Link href="/buscar" className="hidden md:block">
-                <Button size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-                  <Search className="h-4 w-4" />
-                  Buscar Casa
+                <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-5">
+                  Comenzar
+                  <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
               </Link>
 
@@ -166,36 +260,33 @@ export default function LandingPage() {
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden pt-4 pb-2 border-t mt-4"
             >
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
+                    className="px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-50 rounded-lg"
                   >
                     {item.label}
                   </Link>
                 ))}
-                <div className="border-t pt-2 mt-2 space-y-2">
+                <div className="border-t pt-3 mt-2 space-y-2">
                   {user ? (
                     <>
                       <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                        <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
-                          <User className="h-4 w-4" />
-                          Mi Cuenta
+                        <Button variant="ghost" size="sm" className="w-full justify-start">
+                          <User className="h-4 w-4 mr-2" />
+                          Dashboard
                         </Button>
                       </Link>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full justify-start gap-2 text-red-600"
-                        onClick={() => {
-                          signOut()
-                          setMobileMenuOpen(false)
-                        }}
+                        className="w-full justify-start text-red-600"
+                        onClick={() => { signOut(); setMobileMenuOpen(false) }}
                       >
-                        <LogOut className="h-4 w-4" />
+                        <LogOut className="h-4 w-4 mr-2" />
                         Cerrar Sesión
                       </Button>
                     </>
@@ -207,9 +298,8 @@ export default function LandingPage() {
                     </Link>
                   )}
                   <Link href="/buscar" onClick={() => setMobileMenuOpen(false)}>
-                    <Button size="sm" className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700">
-                      <Search className="h-4 w-4" />
-                      Buscar Casa
+                    <Button size="sm" className="w-full bg-slate-900 hover:bg-slate-800">
+                      Comenzar Búsqueda
                     </Button>
                   </Link>
                 </div>
@@ -217,198 +307,368 @@ export default function LandingPage() {
             </motion.div>
           )}
         </div>
-      </header>
+      </motion.header>
 
-      {/* Hero Section */}
-      <main className="flex-1">
-        <section className="relative py-20 md:py-32 overflow-hidden">
-          {/* Background decoration */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-200/30 rounded-full blur-3xl" />
-            <div className="absolute bottom-20 right-10 w-96 h-96 bg-teal-200/30 rounded-full blur-3xl" />
-          </div>
-
-          <div className="container mx-auto px-4 relative z-10">
+      {/* Main Content */}
+      <main className="flex-1 pt-20">
+        {/* Hero Section - Clean & Impactful */}
+        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+          {/* Subtle background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-white" />
+          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-emerald-50/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          
+          <div className="relative z-10 max-w-5xl mx-auto px-6 py-20 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="max-w-3xl mx-auto text-center space-y-8"
+              transition={{ duration: 0.8 }}
+              className="space-y-8"
             >
-              <Badge variant="outline" className="gap-2 px-4 py-1.5 text-sm border-emerald-200 bg-emerald-50 text-emerald-700">
-                <Sparkles className="h-3.5 w-3.5" />
-                Powered by AI
-              </Badge>
-
-              <h1 className="text-4xl md:text-6xl font-bold text-slate-900 leading-tight">
-                Encuentra tu{' '}
-                <span className="text-emerald-600">hogar ideal</span>
-                <br />
-                en Puerto Rico
-              </h1>
-
-              <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto">
-                Describe cómo imaginas tu vida perfecta y nuestra inteligencia artificial 
-                encontrará las propiedades que mejor se adaptan a tu estilo de vida.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                <Link href="/buscar">
-                  <Button size="lg" className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-base px-8 h-12 w-full sm:w-auto">
-                    <Search className="h-5 w-5" />
-                    Comenzar Búsqueda Gratis
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 text-slate-600 text-sm">
+                <Sparkles className="h-4 w-4 text-emerald-600" />
+                La forma más inteligente de buscar propiedades
               </div>
 
-              <p className="text-sm text-slate-500">
-                Sin tarjeta de crédito • Resultados en minutos
+              {/* Main Headline */}
+              <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 leading-[1.1]">
+                Encuentra tu hogar
+                <br />
+                <span className="text-emerald-600">
+                  <TypewriterText words={['ideal', 'perfecto', 'soñado']} />
+                </span>
+              </h1>
+
+              {/* Subheadline */}
+              <p className="text-xl md:text-2xl text-slate-500 max-w-2xl mx-auto font-light leading-relaxed">
+                Describe cómo quieres vivir y recibe propiedades 
+                que realmente se adaptan a tu estilo de vida.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <Link href="/buscar">
+                  <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8 h-14 text-base">
+                    <Search className="h-5 w-5 mr-2" />
+                    Comenzar ahora
+                  </Button>
+                </Link>
+                <Button size="lg" variant="outline" className="rounded-full px-8 h-14 text-base border-slate-200">
+                  <Play className="h-5 w-5 mr-2" />
+                  Ver cómo funciona
+                </Button>
+              </div>
+
+              {/* Trust indicators */}
+              <p className="text-sm text-slate-400 pt-2">
+                Sin compromiso · Resultados en 2 minutos
               </p>
             </motion.div>
           </div>
         </section>
 
-        {/* How it Works - Simple Steps */}
-        <section className="py-16 bg-white border-y">
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-12"
+        {/* Stats Bar */}
+        <section className="border-y border-slate-100 bg-slate-50/50">
+          <div className="max-w-6xl mx-auto px-6 py-12">
+            <motion.div 
+              {...fadeInUp}
+              className="grid grid-cols-2 md:grid-cols-4 gap-8"
             >
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">
-                ¿Cómo funciona?
+              {stats.map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div className="text-3xl md:text-4xl font-bold text-slate-900">{stat.value}</div>
+                  <div className="text-sm text-slate-500 mt-1">{stat.label}</div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* How it Works - 3 Steps */}
+        <section className="py-24 md:py-32">
+          <div className="max-w-6xl mx-auto px-6">
+            <motion.div {...fadeInUp} className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                Tan simple como 1, 2, 3
               </h2>
-              <p className="text-slate-600 max-w-xl mx-auto">
-                Tres pasos simples para encontrar tu hogar ideal
+              <p className="text-lg text-slate-500 max-w-xl mx-auto">
+                Olvídate de filtros complicados. Solo describe tu vida ideal.
               </p>
             </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              {[
-                {
-                  step: '1',
-                  title: 'Describe tu vida ideal',
-                  description: 'Cuéntanos cómo imaginas tu día a día: cercanía al mar, vida urbana, espacio para familia, etc.',
-                },
-                {
-                  step: '2',
-                  title: 'La IA analiza',
-                  description: 'Nuestra inteligencia artificial procesa tu perfil y busca entre cientos de propiedades.',
-                },
-                {
-                  step: '3',
-                  title: 'Recibe matches',
-                  description: 'Obtén una lista personalizada de propiedades que se adaptan a tu estilo de vida.',
-                },
-              ].map((item, index) => (
+            <motion.div 
+              {...staggerContainer}
+              className="grid md:grid-cols-3 gap-8 md:gap-12"
+            >
+              {steps.map((step, index) => (
                 <motion.div
-                  key={item.step}
-                  initial={{ opacity: 0, y: 20 }}
+                  key={step.title}
+                  initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="text-center space-y-4"
+                  transition={{ delay: index * 0.15 }}
+                  className="relative"
                 >
-                  <div className="h-14 w-14 mx-auto rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl font-bold">
-                    {item.step}
+                  {/* Connector line */}
+                  {index < steps.length - 1 && (
+                    <div className="hidden md:block absolute top-12 left-[60%] w-[80%] h-px bg-gradient-to-r from-slate-200 to-transparent" />
+                  )}
+                  
+                  <div className="text-center space-y-4">
+                    <div className="inline-flex items-center justify-center h-24 w-24 rounded-2xl bg-slate-100 mx-auto">
+                      <step.icon className="h-10 w-10 text-slate-700" />
+                    </div>
+                    <div className="text-sm font-medium text-emerald-600">Paso {index + 1}</div>
+                    <h3 className="text-xl font-semibold text-slate-900">{step.title}</h3>
+                    <p className="text-slate-500">{step.description}</p>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
-                  <p className="text-slate-600 text-sm">{item.description}</p>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
 
-            <div className="text-center mt-12">
+            <motion.div {...fadeInUp} className="text-center mt-16">
               <Link href="/buscar">
-                <Button size="lg" className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-                  Comenzar Ahora
-                  <ArrowRight className="h-4 w-4" />
+                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 rounded-full px-8 h-14">
+                  Probarlo ahora
+                  <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
               </Link>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* AI Features Highlight */}
+        <section className="py-24 md:py-32 bg-slate-900 text-white overflow-hidden">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="grid md:grid-cols-2 gap-16 items-center">
+              <motion.div {...fadeInUp} className="space-y-8">
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                  Tecnología Inteligente
+                </Badge>
+                <h2 className="text-4xl md:text-5xl font-bold leading-tight">
+                  No buscas propiedades.
+                  <br />
+                  <span className="text-emerald-400">Describes tu vida.</span>
+                </h2>
+                <p className="text-lg text-slate-400 leading-relaxed">
+                  Entendemos tus palabras y las traducimos en características 
+                  concretas: ubicación, amenidades, estilo, presupuesto. Todo automáticamente.
+                </p>
+                <ul className="space-y-4">
+                  {[
+                    'Análisis semántico de tus preferencias',
+                    'Matching con scoring de compatibilidad',
+                    'Predicciones de valorización',
+                    'Alertas inteligentes personalizadas',
+                  ].map((feature) => (
+                    <li key={feature} className="flex items-center gap-3 text-slate-300">
+                      <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="relative"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-3xl blur-3xl" />
+                <Card className="relative bg-slate-800/50 border-slate-700 backdrop-blur">
+                  <CardContent className="p-8">
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                          <Brain className="h-5 w-5 text-emerald-400" />
+                        </div>
+                        <span className="text-slate-300">Análisis inteligente</span>
+                      </div>
+                      <div className="p-4 bg-slate-900/50 rounded-xl">
+                        <p className="text-slate-400 text-sm italic">
+                          "Quiero vivir cerca del mar, trabajar remoto con buen internet, 
+                          y tener cafeterías cerca para las mañanas..."
+                        </p>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-400">Compatibilidad</span>
+                          <span className="text-emerald-400 font-medium">94%</span>
+                        </div>
+                        <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: '94%' }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 1, delay: 0.5 }}
+                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {['Costero', 'WiFi rápido', 'Cafeterías', 'Trabajo remoto'].map((tag) => (
+                          <span key={tag} className="px-3 py-1 bg-slate-700 text-slate-300 rounded-full text-xs">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
           </div>
         </section>
 
-        {/* Benefits Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">
-                ¿Por qué usar HogarAI?
+        {/* Pricing Preview */}
+        <section className="py-24 md:py-32">
+          <div className="max-w-6xl mx-auto px-6">
+            <motion.div {...fadeInUp} className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                Invierte en encontrar tu lugar
               </h2>
+              <p className="text-lg text-slate-500">
+                Planes flexibles que se adaptan a tu búsqueda. Cancela cuando quieras.
+              </p>
             </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {benefits.map((benefit, index) => (
+            <motion.div 
+              {...staggerContainer}
+              className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto"
+            >
+              {plans.map((plan, index) => (
                 <motion.div
-                  key={benefit.title}
-                  initial={{ opacity: 0, y: 20 }}
+                  key={plan.name}
+                  initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="h-full border-2 hover:border-emerald-200 transition-colors">
-                    <CardContent className="p-6 space-y-4">
-                      <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-                        <benefit.icon className="h-6 w-6 text-emerald-600" />
+                  <Card className={`relative h-full border-2 ${plan.color} ${plan.popular ? 'shadow-lg shadow-emerald-500/10' : ''}`}>
+                    {plan.popular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <Badge className="bg-emerald-600 text-white">Más popular</Badge>
                       </div>
-                      <h3 className="text-lg font-semibold text-slate-900">{benefit.title}</h3>
-                      <p className="text-slate-600 text-sm">{benefit.description}</p>
+                    )}
+                    <CardContent className="p-6 space-y-6">
+                      <div>
+                        <h3 className="text-xl font-semibold text-slate-900">{plan.name}</h3>
+                        <p className="text-sm text-slate-500">{plan.description}</p>
+                      </div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-bold text-slate-900">${plan.price}</span>
+                        <span className="text-slate-500">/mes</span>
+                      </div>
+                      <ul className="space-y-3">
+                        {plan.features.map((feature) => (
+                          <li key={feature} className="flex items-center gap-2 text-sm text-slate-600">
+                            <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                      <Link href="/precios" className="block">
+                        <Button 
+                          variant={plan.popular ? 'default' : 'outline'} 
+                          className={`w-full ${plan.popular ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+                        >
+                          Elegir plan
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
+
+            <motion.div {...fadeInUp} className="text-center mt-8">
+              <Link href="/precios" className="text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-1 text-sm font-medium">
+                Ver todos los detalles
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="py-24 md:py-32 bg-slate-50">
+          <div className="max-w-6xl mx-auto px-6">
+            <motion.div {...fadeInUp} className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                Lo que dicen nuestros usuarios
+              </h2>
+            </motion.div>
+
+            <motion.div 
+              {...staggerContainer}
+              className="grid md:grid-cols-3 gap-6"
+            >
+              {testimonials.map((testimonial, index) => (
+                <motion.div
+                  key={testimonial.name}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="h-full bg-white border-0 shadow-sm">
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                        ))}
+                      </div>
+                      <p className="text-slate-600 leading-relaxed">"{testimonial.text}"</p>
+                      <div className="flex items-center gap-3 pt-2">
+                        <div className="h-10 w-10 rounded-full bg-slate-900 flex items-center justify-center text-white font-medium">
+                          {testimonial.avatar}
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-900">{testimonial.name}</p>
+                          <p className="text-xs text-slate-500 flex items-center gap-1">
+                            {testimonial.role} · <MapPin className="h-3 w-3" /> {testimonial.location}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </section>
 
         {/* SREIS Modules Section - Shown only if modules are enabled */}
         {hasActiveModules && (
-          <section className="py-20 bg-gradient-to-b from-slate-100 to-white">
-            <div className="container mx-auto px-4">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-center mb-12"
-              >
+          <section className="py-24 md:py-32">
+            <div className="max-w-6xl mx-auto px-6">
+              <motion.div {...fadeInUp} className="text-center mb-16">
                 <Badge variant="outline" className="gap-2 mb-4 px-4 py-1.5 border-purple-200 bg-purple-50 text-purple-700">
                   <Sparkles className="h-3.5 w-3.5" />
-                  Inteligencia Avanzada
+                  Herramientas Pro
                 </Badge>
-                <h2 className="text-3xl font-bold text-slate-900 mb-4">
-                  Herramientas de Análisis Profesional
+                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                  Análisis profesional de mercado
                 </h2>
-                <p className="text-slate-600 max-w-xl mx-auto">
-                  Accede a análisis de mercado impulsados por IA para tomar decisiones informadas
+                <p className="text-lg text-slate-500 max-w-xl mx-auto">
+                  Accede a insights exclusivos para tomar mejores decisiones
                 </p>
               </motion.div>
 
-              <div className="space-y-12">
-                {/* Demand Prediction Module */}
-                <ModuleSection moduleKey="demand-prediction" className="scroll-mt-20" showHeader={false}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                  >
-                    <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
-                      <CardContent className="p-6 md:p-8">
+              <div className="space-y-8">
+                <ModuleSection moduleKey="demand-prediction" showHeader={false}>
+                  <motion.div {...fadeInUp}>
+                    <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50/50 to-pink-50/50">
+                      <CardContent className="p-8">
                         <div className="flex items-center gap-3 mb-6">
-                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                            <TrendingUp className="h-6 w-6 text-white" />
+                          <div className="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                            <TrendingUp className="h-6 w-6 text-purple-600" />
                           </div>
                           <div>
                             <h3 className="text-xl font-bold text-slate-900">Predicción de Demanda</h3>
-                            <p className="text-sm text-slate-600">Identifica zonas calientes antes que otros</p>
+                            <p className="text-sm text-slate-500">Identifica zonas calientes</p>
                           </div>
                         </div>
                         <DemandPredictionEngine />
@@ -417,22 +677,17 @@ export default function LandingPage() {
                   </motion.div>
                 </ModuleSection>
 
-                {/* Equity Forecast Module */}
-                <ModuleSection moduleKey="equity-forecast" className="scroll-mt-20" showHeader={false}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                  >
-                    <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20">
-                      <CardContent className="p-6 md:p-8">
+                <ModuleSection moduleKey="equity-forecast" showHeader={false}>
+                  <motion.div {...fadeInUp}>
+                    <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-teal-50/50">
+                      <CardContent className="p-8">
                         <div className="flex items-center gap-3 mb-6">
-                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                            <LineChart className="h-6 w-6 text-white" />
+                          <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+                            <LineChart className="h-6 w-6 text-emerald-600" />
                           </div>
                           <div>
                             <h3 className="text-xl font-bold text-slate-900">Proyección de Plusvalía</h3>
-                            <p className="text-sm text-slate-600">Conoce el valor futuro de tu inversión</p>
+                            <p className="text-sm text-slate-500">Valor futuro de tu inversión</p>
                           </div>
                         </div>
                         <EquityForecast />
@@ -445,100 +700,100 @@ export default function LandingPage() {
           </section>
         )}
 
-        {/* Testimonials Section */}
-        <section className="py-20 bg-slate-50">
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">
-                Lo que dicen nuestros usuarios
+        {/* Final CTA */}
+        <section className="py-24 md:py-32 bg-slate-900 text-white">
+          <div className="max-w-3xl mx-auto px-6 text-center">
+            <motion.div {...fadeInUp} className="space-y-8">
+              <h2 className="text-4xl md:text-5xl font-bold">
+                ¿Listo para encontrar tu lugar?
               </h2>
-            </motion.div>
-
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {testimonials.map((testimonial, index) => (
-                <motion.div
-                  key={testimonial.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Card className="h-full bg-white">
-                    <CardContent className="p-6 space-y-4">
-                      <div className="flex gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                        ))}
-                      </div>
-                      <p className="text-slate-600 text-sm italic">"{testimonial.text}"</p>
-                      <div className="flex items-center gap-3 pt-2">
-                        <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-semibold">
-                          {testimonial.avatar}
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900 text-sm">{testimonial.name}</p>
-                          <p className="text-xs text-slate-500 flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {testimonial.location}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="max-w-2xl mx-auto text-center space-y-6"
-            >
-              <h2 className="text-3xl font-bold text-slate-900">
-                ¿Listo para encontrar tu hogar ideal?
-              </h2>
-              <p className="text-slate-600">
-                Comienza tu búsqueda hoy. Es gratis y solo toma unos minutos.
+              <p className="text-xl text-slate-400">
+                Únete a miles de personas que ya encontraron donde quieren vivir.
               </p>
               <Link href="/buscar">
-                <Button size="lg" className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-base px-8 h-12">
-                  <Search className="h-5 w-5" />
-                  Comenzar Búsqueda Gratis
+                <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-100 rounded-full px-10 h-14 text-base font-medium">
+                  Comenzar ahora
+                  <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
               </Link>
             </motion.div>
           </div>
         </section>
+
+        {/* Newsletter Section */}
+        <section className="py-16 border-t border-slate-100">
+          <div className="max-w-xl mx-auto px-6 text-center">
+            <motion.div {...fadeInUp} className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900">
+                Recibe las mejores propiedades en tu inbox
+              </h3>
+              <p className="text-sm text-slate-500">
+                Alertas semanales de nuevas propiedades que coinciden con tu perfil.
+              </p>
+              <form className="flex gap-2 max-w-md mx-auto">
+                <Input 
+                  type="email" 
+                  placeholder="tu@email.com" 
+                  className="flex-1 rounded-full border-slate-200"
+                />
+                <Button type="submit" className="rounded-full bg-slate-900 hover:bg-slate-800 px-6">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Suscribir
+                </Button>
+              </form>
+            </motion.div>
+          </div>
+        </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t bg-white py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                <Home className="h-4 w-4 text-white" />
-              </div>
-              <span className="font-semibold text-slate-900">HogarAI</span>
+      {/* Footer - Clean & Minimal */}
+      <footer className="border-t border-slate-100 bg-white">
+        <div className="max-w-6xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+            <div className="col-span-2 md:col-span-1">
+              <Link href="/" className="flex items-center gap-2 mb-4">
+                <div className="h-8 w-8 rounded-lg bg-slate-900 flex items-center justify-center">
+                  <Home className="h-4 w-4 text-white" />
+                </div>
+                <span className="font-semibold text-slate-900">HogarAI</span>
+              </Link>
+              <p className="text-sm text-slate-500">
+                La forma más inteligente de encontrar tu próximo hogar.
+              </p>
             </div>
-            <p className="text-sm text-slate-500">
-              © 2025 HogarAI. Todos los derechos reservados.
+            <div>
+              <h4 className="font-medium text-slate-900 mb-4">Producto</h4>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li><Link href="/buscar" className="hover:text-slate-900">Buscar Casa</Link></li>
+                <li><Link href="/precios" className="hover:text-slate-900">Precios</Link></li>
+                <li><Link href="#" className="hover:text-slate-900">API</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium text-slate-900 mb-4">Empresa</h4>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li><Link href="#" className="hover:text-slate-900">Sobre Nosotros</Link></li>
+                <li><Link href="#" className="hover:text-slate-900">Blog</Link></li>
+                <li><Link href="#" className="hover:text-slate-900">Contacto</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium text-slate-900 mb-4">Legal</h4>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li><Link href="#" className="hover:text-slate-900">Términos</Link></li>
+                <li><Link href="#" className="hover:text-slate-900">Privacidad</Link></li>
+                <li><Link href="#" className="hover:text-slate-900">Cookies</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-slate-400">
+              © {new Date().getFullYear()} HogarAI. Todos los derechos reservados.
             </p>
-            <div className="flex items-center gap-4 text-sm text-slate-500">
-              <Link href="#" className="hover:text-slate-900">Términos</Link>
-              <Link href="#" className="hover:text-slate-900">Privacidad</Link>
-              <Link href="#" className="hover:text-slate-900">Contacto</Link>
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">
+                Made with ❤️ in Puerto Rico
+              </span>
             </div>
           </div>
         </div>
@@ -546,4 +801,3 @@ export default function LandingPage() {
     </div>
   )
 }
-

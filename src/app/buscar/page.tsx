@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useAuth } from '@/components/auth/AuthProvider'
+import { SubscriptionGate, useHasAccess } from '@/components/paywall/SubscriptionGate'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -180,30 +181,28 @@ export default function BuscarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-white/90 backdrop-blur-md">
-        <div className="container mx-auto px-4 py-4">
+    <div className="min-h-screen bg-white">
+      {/* Header - Consistent with landing */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
+        <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                <Home className="h-5 w-5 text-white" />
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg bg-slate-900 flex items-center justify-center">
+                <Home className="h-4.5 w-4.5 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900">
-                  Hogar<span className="text-emerald-600">AI</span>
-                </h1>
-              </div>
+              <span className="text-lg font-semibold tracking-tight text-slate-900">
+                Hogar<span className="text-emerald-600">AI</span>
+              </span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/" className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">
+            <nav className="hidden md:flex items-center gap-8">
+              <Link href="/" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
                 Inicio
               </Link>
-              <Link href="/buscar" className="text-sm font-medium text-emerald-600">
+              <Link href="/buscar" className="text-sm text-emerald-600 font-medium">
                 Buscar Casa
               </Link>
-              <Link href="/precios" className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">
+              <Link href="/precios" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
                 Precios
               </Link>
             </nav>
@@ -212,20 +211,20 @@ export default function BuscarPage() {
               {!authLoading && (
                 <>
                   {user ? (
-                    <div className="flex items-center gap-2">
+                    <div className="hidden md:flex items-center gap-2">
                       <Link href="/dashboard">
-                        <Button variant="ghost" size="sm" className="gap-2">
-                          <User className="h-4 w-4" />
+                        <Button variant="ghost" size="sm" className="text-slate-600">
+                          <User className="h-4 w-4 mr-2" />
                           Mi Cuenta
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="icon" onClick={() => signOut()}>
+                      <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-slate-400">
                         <LogOut className="h-4 w-4" />
                       </Button>
                     </div>
                   ) : (
-                    <Link href="/auth/login">
-                      <Button size="sm" variant="outline">
+                    <Link href="/auth/login" className="hidden md:block">
+                      <Button variant="ghost" size="sm" className="text-slate-600">
                         Iniciar Sesión
                       </Button>
                     </Link>
@@ -238,32 +237,51 @@ export default function BuscarPage() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-12">
+      <main className="pt-20">
         <AnimatePresence mode="wait">
           {/* Form Step */}
           {step === 'form' && (
             <motion.div
               key="form"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="max-w-2xl mx-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
-              <div className="text-center mb-8 space-y-4">
-                <Badge variant="outline" className="gap-2 px-4 py-1.5 border-emerald-200 bg-emerald-50 text-emerald-700">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Búsqueda Inteligente
-                </Badge>
-                <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
-                  Cuéntanos sobre tu vida ideal
-                </h1>
-                <p className="text-slate-600 max-w-xl mx-auto">
-                  Describe cómo imaginas tu día a día y encontraremos las propiedades 
-                  que mejor se adaptan a tu estilo de vida.
-                </p>
-              </div>
+              {/* Hero Section - Dark */}
+              <section className="bg-slate-900 text-white py-16 md:py-20">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-6"
+                  >
+                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                      <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                      Búsqueda inteligente
+                    </Badge>
+                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+                      Describe tu vida.
+                      <br />
+                      <span className="text-emerald-400">Encuentra tu lugar.</span>
+                    </h1>
+                    <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+                      Cuéntanos cómo imaginas tu día a día y encontraremos propiedades 
+                      que realmente se adaptan a tu estilo de vida.
+                    </p>
+                  </motion.div>
+                </div>
+              </section>
 
-              <Card className="border-2">
+              {/* Form Section */}
+              <section className="py-12 md:py-16 bg-slate-50">
+                <div className="max-w-2xl mx-auto px-6">
+                  {/* Subscription Gate - wraps form for access control */}
+                  <SubscriptionGate
+                    title="Activa un plan para buscar propiedades"
+                    description="La búsqueda inteligente está disponible para usuarios con un plan activo. Los administradores tienen acceso automático."
+                    showPreview={true}
+                  >
+              <Card className="border-0 shadow-lg bg-white">
                 <CardContent className="p-6 md:p-8">
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Lifestyle Description */}
@@ -416,15 +434,18 @@ export default function BuscarPage() {
                     <Button
                       type="submit"
                       size="lg"
-                      className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 h-12"
+                      className="w-full gap-2 bg-slate-900 hover:bg-slate-800 h-14 text-base rounded-xl"
                       disabled={!answers.lifestyle.trim() || !answers.purpose || !answers.priority}
                     >
                       <Search className="h-5 w-5" />
-                      Buscar Propiedades
+                      Encontrar mi hogar ideal
                     </Button>
                   </form>
                 </CardContent>
               </Card>
+              </SubscriptionGate>
+                </div>
+              </section>
             </motion.div>
           )}
 
@@ -432,21 +453,23 @@ export default function BuscarPage() {
           {step === 'analyzing' && (
             <motion.div
               key="analyzing"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="flex flex-col items-center justify-center py-20 space-y-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="min-h-[60vh] flex flex-col items-center justify-center py-20"
             >
-              <div className="relative">
-                <div className="h-20 w-20 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <Loader2 className="h-10 w-10 text-emerald-600 animate-spin" />
+              <div className="text-center space-y-8">
+                <div className="relative">
+                  <div className="h-24 w-24 mx-auto rounded-full bg-slate-900 flex items-center justify-center">
+                    <Loader2 className="h-12 w-12 text-emerald-400 animate-spin" />
+                  </div>
                 </div>
-              </div>
-              <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold text-slate-900">Analizando tu perfil...</h2>
-                <p className="text-slate-600">
-                  Estamos buscando propiedades que se adapten a tu estilo de vida
-                </p>
+                <div className="space-y-3">
+                  <h2 className="text-3xl font-bold text-slate-900">Analizando tu perfil...</h2>
+                  <p className="text-slate-500 max-w-md mx-auto">
+                    Estamos procesando tus preferencias y buscando propiedades que encajen con tu estilo de vida
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}
@@ -455,69 +478,71 @@ export default function BuscarPage() {
           {step === 'error' && searchError && (
             <motion.div
               key="error"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="max-w-2xl mx-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="py-16"
             >
-              <Card className="border-2 border-amber-200 bg-amber-50">
-                <CardContent className="p-8 text-center space-y-6">
-                  <div className="h-16 w-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto">
-                    {searchError.code === 'NO_PROVIDERS' ? (
-                      <Database className="h-8 w-8 text-amber-600" />
-                    ) : (
-                      <AlertCircle className="h-8 w-8 text-amber-600" />
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h2 className="text-2xl font-bold text-slate-900">
-                      {searchError.code === 'NO_PROVIDERS' 
-                        ? 'Búsqueda No Disponible'
-                        : 'Error en la Búsqueda'
-                      }
-                    </h2>
-                    <p className="text-slate-600">
-                      {searchError.message}
-                    </p>
-                  </div>
-
-                  {searchError.code === 'NO_PROVIDERS' && (
-                    <div className="bg-white/80 rounded-lg p-4 text-left space-y-3">
-                      <p className="text-sm text-slate-700 font-medium">
-                        Para habilitar la búsqueda de propiedades:
-                      </p>
-                      <ul className="text-sm text-slate-600 space-y-2">
-                        <li className="flex items-start gap-2">
-                          <span className="text-emerald-500">1.</span>
-                          Un administrador debe acceder al panel de administración
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-emerald-500">2.</span>
-                          Configurar al menos un proveedor de datos (Showcase IDX, Zillow, etc.)
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-emerald-500">3.</span>
-                          Ingresar las credenciales de API del proveedor
-                        </li>
-                      </ul>
+              <div className="max-w-2xl mx-auto px-6">
+                <Card className="border-0 shadow-lg bg-white">
+                  <CardContent className="p-8 md:p-12 text-center space-y-8">
+                    <div className="h-20 w-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto">
+                      {searchError.code === 'NO_PROVIDERS' ? (
+                        <Database className="h-10 w-10 text-amber-600" />
+                      ) : (
+                        <AlertCircle className="h-10 w-10 text-amber-600" />
+                      )}
                     </div>
-                  )}
+                    
+                    <div className="space-y-3">
+                      <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+                        {searchError.code === 'NO_PROVIDERS' 
+                          ? 'Búsqueda No Disponible'
+                          : 'Error en la Búsqueda'
+                        }
+                      </h2>
+                      <p className="text-slate-500">
+                        {searchError.message}
+                      </p>
+                    </div>
 
-                  <div className="flex justify-center gap-3">
-                    <Button variant="outline" onClick={resetSearch} className="gap-2">
-                      <ArrowLeft className="h-4 w-4" />
-                      Volver
-                    </Button>
-                    <Link href="/">
-                      <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-                        <Home className="h-4 w-4" />
-                        Ir al Inicio
+                    {searchError.code === 'NO_PROVIDERS' && (
+                      <div className="bg-slate-50 rounded-xl p-6 text-left space-y-4">
+                        <p className="text-sm text-slate-700 font-medium">
+                          Para habilitar la búsqueda:
+                        </p>
+                        <ul className="text-sm text-slate-600 space-y-3">
+                          <li className="flex items-start gap-3">
+                            <span className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-medium shrink-0">1</span>
+                            <span>Un administrador debe acceder al panel de administración</span>
+                          </li>
+                          <li className="flex items-start gap-3">
+                            <span className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-medium shrink-0">2</span>
+                            <span>Configurar al menos un proveedor de datos</span>
+                          </li>
+                          <li className="flex items-start gap-3">
+                            <span className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-medium shrink-0">3</span>
+                            <span>Ingresar las credenciales de API</span>
+                          </li>
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="flex justify-center gap-3 pt-2">
+                      <Button variant="outline" onClick={resetSearch} className="gap-2 rounded-full px-6">
+                        <ArrowLeft className="h-4 w-4" />
+                        Volver
                       </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+                      <Link href="/">
+                        <Button className="gap-2 bg-slate-900 hover:bg-slate-800 rounded-full px-6">
+                          <Home className="h-4 w-4" />
+                          Ir al Inicio
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </motion.div>
           )}
 
@@ -525,68 +550,77 @@ export default function BuscarPage() {
           {step === 'results' && (
             <motion.div
               key="results"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
-              {/* Results Header */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
-                      matches.length > 0 ? 'bg-emerald-100' : 'bg-slate-100'
-                    }`}>
-                      {matches.length > 0 ? (
-                        <CheckCircle className="h-6 w-6 text-emerald-600" />
-                      ) : (
-                        <Search className="h-6 w-6 text-slate-400" />
-                      )}
+              {/* Results Header - Dark */}
+              <section className={`py-12 ${matches.length > 0 ? 'bg-slate-900 text-white' : 'bg-slate-100'}`}>
+                <div className="max-w-6xl mx-auto px-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                      <div className={`h-14 w-14 rounded-xl flex items-center justify-center ${
+                        matches.length > 0 ? 'bg-emerald-500/20' : 'bg-white'
+                      }`}>
+                        {matches.length > 0 ? (
+                          <CheckCircle className="h-7 w-7 text-emerald-400" />
+                        ) : (
+                          <Search className="h-7 w-7 text-slate-400" />
+                        )}
+                      </div>
+                      <div>
+                        <h1 className={`text-2xl md:text-3xl font-bold ${matches.length > 0 ? 'text-white' : 'text-slate-900'}`}>
+                          {matches.length > 0 
+                            ? `${matches.length} propiedades encontradas`
+                            : 'Sin resultados'
+                          }
+                        </h1>
+                        <p className={matches.length > 0 ? 'text-slate-400' : 'text-slate-500'}>
+                          {matches.length > 0 
+                            ? 'Propiedades que encajan con tu estilo de vida'
+                            : 'Intenta ampliar tus criterios de búsqueda'
+                          }
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h1 className="text-2xl font-bold text-slate-900">
-                        {matches.length > 0 
-                          ? `¡Encontramos ${matches.length} propiedades para ti!`
-                          : 'No encontramos propiedades'
-                        }
-                      </h1>
-                      <p className="text-slate-600">
-                        {matches.length > 0 
-                          ? 'Basado en tu estilo de vida y preferencias'
-                          : 'Intenta ampliar tus criterios de búsqueda'
-                        }
-                      </p>
-                    </div>
+                    <Button 
+                      variant={matches.length > 0 ? 'secondary' : 'outline'} 
+                      onClick={resetSearch} 
+                      className={`gap-2 rounded-full px-6 ${matches.length > 0 ? 'bg-white text-slate-900 hover:bg-slate-100' : ''}`}
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Nueva Búsqueda
+                    </Button>
                   </div>
-                  {providersQueried.length > 0 && (
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                  {providersQueried.length > 0 && matches.length > 0 && (
+                    <div className="flex items-center gap-2 text-xs text-slate-500 mt-4">
                       <Database className="h-3 w-3" />
                       <span>Fuentes: {providersQueried.join(', ')}</span>
                     </div>
                   )}
                 </div>
-                <Button variant="outline" onClick={resetSearch} className="gap-2">
-                  <ArrowLeft className="h-4 w-4" />
-                  Nueva Búsqueda
-                </Button>
-              </div>
+              </section>
+
+              {/* Results Content */}
+              <section className="py-12 bg-white">
+                <div className="max-w-6xl mx-auto px-6 space-y-8">
 
               {/* No Results Message */}
               {matches.length === 0 && (
-                <Card className="border-2 border-slate-200">
-                  <CardContent className="p-8 text-center space-y-4">
-                    <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
-                      <Search className="h-8 w-8 text-slate-400" />
+                <Card className="border-0 shadow-lg bg-slate-50">
+                  <CardContent className="p-12 text-center space-y-6">
+                    <div className="h-20 w-20 rounded-full bg-slate-200 flex items-center justify-center mx-auto">
+                      <Search className="h-10 w-10 text-slate-400" />
                     </div>
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        No hay propiedades que coincidan con tu búsqueda
+                    <div className="space-y-3">
+                      <h3 className="text-xl font-bold text-slate-900">
+                        No encontramos propiedades
                       </h3>
-                      <p className="text-slate-600 max-w-md mx-auto">
+                      <p className="text-slate-500 max-w-md mx-auto">
                         Intenta con una descripción diferente, amplía tu presupuesto o cambia la ubicación preferida.
                       </p>
                     </div>
-                    <Button onClick={resetSearch} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+                    <Button onClick={resetSearch} className="gap-2 bg-slate-900 hover:bg-slate-800 rounded-full px-8">
                       <Search className="h-4 w-4" />
                       Nueva Búsqueda
                     </Button>
@@ -604,7 +638,7 @@ export default function BuscarPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
                     >
-                      <Card className="h-full border-2 hover:border-emerald-200 hover:shadow-lg transition-all">
+                        <Card className="h-full border-0 shadow-md hover:shadow-xl transition-all bg-white">
                         {/* Property Image */}
                         {match.images && match.images.length > 0 && (
                           <div className="relative h-48 overflow-hidden rounded-t-lg">
@@ -630,8 +664,8 @@ export default function BuscarPage() {
                                 {match.city ? `${match.address}, ${match.city}` : match.address}
                               </CardDescription>
                             </div>
-                            <Badge className="bg-emerald-600 shrink-0">
-                              {match.matchScore}% Match
+                            <Badge className="bg-slate-900 text-white shrink-0">
+                              {match.matchScore}%
                             </Badge>
                           </div>
                         </CardHeader>
@@ -689,7 +723,7 @@ export default function BuscarPage() {
                             </div>
                           )}
 
-                          <Button className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700">
+                          <Button className="w-full gap-2 bg-slate-900 hover:bg-slate-800 rounded-lg">
                             Ver Detalles
                             <ArrowRight className="h-4 w-4" />
                           </Button>
@@ -702,23 +736,23 @@ export default function BuscarPage() {
 
               {/* Upsell for non-logged users */}
               {!user && matches.length > 0 && (
-                <Card className="border-2 border-emerald-200 bg-emerald-50">
-                  <CardContent className="p-6">
+                <Card className="border-0 bg-slate-900 text-white shadow-xl">
+                  <CardContent className="p-8">
                     <div className="flex flex-col md:flex-row items-center gap-6">
-                      <div className="h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                        <Sparkles className="h-7 w-7 text-emerald-600" />
+                      <div className="h-16 w-16 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+                        <Sparkles className="h-8 w-8 text-emerald-400" />
                       </div>
                       <div className="flex-1 text-center md:text-left">
-                        <h3 className="font-semibold text-lg text-slate-900">
+                        <h3 className="font-bold text-xl">
                           ¿Te gustan estos resultados?
                         </h3>
-                        <p className="text-slate-600 text-sm">
-                          Crea una cuenta gratis para guardar tus búsquedas, recibir alertas de nuevas propiedades y acceder a más funciones.
+                        <p className="text-slate-400 mt-1">
+                          Crea una cuenta para guardar tus búsquedas, recibir alertas de nuevas propiedades y más.
                         </p>
                       </div>
                       <Link href="/auth/login">
-                        <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-                          Crear Cuenta Gratis
+                        <Button className="gap-2 bg-white text-slate-900 hover:bg-slate-100 rounded-full px-8">
+                          Crear Cuenta
                           <ArrowRight className="h-4 w-4" />
                         </Button>
                       </Link>
@@ -735,15 +769,15 @@ export default function BuscarPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50">
-                      <CardContent className="p-6 md:p-8">
-                        <div className="flex items-center gap-3 mb-6">
-                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                            <LineChart className="h-6 w-6 text-white" />
+                    <Card className="border-0 shadow-lg bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+                      <CardContent className="p-8">
+                        <div className="flex items-center gap-4 mb-6">
+                          <div className="h-14 w-14 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                            <LineChart className="h-7 w-7 text-emerald-400" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-bold text-slate-900">¿Cuánto valdrá en el futuro?</h3>
-                            <p className="text-sm text-slate-600">Proyección de plusvalía para propiedades similares</p>
+                            <h3 className="text-xl font-bold">¿Cuánto valdrá en el futuro?</h3>
+                            <p className="text-sm text-slate-400">Proyección de valorización para propiedades similares</p>
                           </div>
                         </div>
                         <EquityForecast />
@@ -752,6 +786,8 @@ export default function BuscarPage() {
                   </motion.div>
                 </ModuleWrapper>
               )}
+                </div>
+              </section>
             </motion.div>
           )}
         </AnimatePresence>
