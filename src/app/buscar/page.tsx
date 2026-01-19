@@ -270,7 +270,7 @@ export default function BuscarPage() {
                       </Label>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-500">$100,000</span>
+                          <span className="text-slate-500">$30,000</span>
                           <span className="font-semibold text-lg text-emerald-600">
                             ${parseInt(answers.budget).toLocaleString()}
                           </span>
@@ -278,7 +278,7 @@ export default function BuscarPage() {
                         </div>
                         <Input
                           type="range"
-                          min="100000"
+                          min="30000"
                           max="2000000"
                           step="10000"
                           value={answers.budget}
