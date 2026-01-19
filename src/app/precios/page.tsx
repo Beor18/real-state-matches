@@ -8,15 +8,13 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import Header from '@/components/layout/Header'
 import {
-  Home,
   CheckCircle,
   Star,
   Crown,
   ArrowRight,
   Loader2,
-  User,
-  LogOut,
   Sparkles,
 } from 'lucide-react'
 
@@ -39,7 +37,7 @@ const planIcons: Record<string, typeof Star> = {
 }
 
 export default function PreciosPage() {
-  const { user, subscription, signOut, isLoading: authLoading } = useAuth()
+  const { user, subscription } = useAuth()
   const router = useRouter()
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly')
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
@@ -115,59 +113,8 @@ export default function PreciosPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header - Consistent with landing */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-lg bg-slate-900 flex items-center justify-center">
-                <Home className="h-4.5 w-4.5 text-white" />
-              </div>
-              <span className="text-lg font-semibold tracking-tight text-slate-900">
-                Hogar<span className="text-emerald-600">AI</span>
-              </span>
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-8">
-              <Link href="/" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                Inicio
-              </Link>
-              <Link href="/buscar" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                Buscar Casa
-              </Link>
-              <Link href="/precios" className="text-sm text-emerald-600 font-medium">
-                Precios
-              </Link>
-            </nav>
-
-            <div className="flex items-center gap-3">
-              {!authLoading && (
-                <>
-                  {user ? (
-                    <div className="hidden md:flex items-center gap-2">
-                      <Link href="/dashboard">
-                        <Button variant="ghost" size="sm" className="text-slate-600">
-                          <User className="h-4 w-4 mr-2" />
-                          Mi Cuenta
-                        </Button>
-                      </Link>
-                      <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-slate-400">
-                        <LogOut className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Link href="/auth/login" className="hidden md:block">
-                      <Button variant="ghost" size="sm" className="text-slate-600">
-                        Iniciar Sesión
-                      </Button>
-                    </Link>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Header */}
+      <Header activeItem="/precios" />
 
       {/* Main Content */}
       <main className="pt-20">

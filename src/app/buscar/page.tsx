@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { SubscriptionGate, useHasAccess } from '@/components/paywall/SubscriptionGate'
+import { SubscriptionGate } from '@/components/paywall/SubscriptionGate'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { ModuleWrapper } from '@/components/modules/ModuleWrapper'
 import EquityForecast from '@/components/reai/EquityForecast'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import Header from '@/components/layout/Header'
 import {
   Home,
   Search,
@@ -28,8 +29,6 @@ import {
   ArrowRight,
   ArrowLeft,
   Loader2,
-  User,
-  LogOut,
   LineChart,
   AlertCircle,
   Database,
@@ -89,7 +88,7 @@ const PRIORITY_OPTIONS = [
 ]
 
 export default function BuscarPage() {
-  const { user, signOut, isLoading: authLoading } = useAuth()
+  const { user } = useAuth()
   const [step, setStep] = useState<'form' | 'analyzing' | 'results' | 'error'>('form')
   const [answers, setAnswers] = useState({
     lifestyle: '',
@@ -182,59 +181,8 @@ export default function BuscarPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header - Consistent with landing */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-lg bg-slate-900 flex items-center justify-center">
-                <Home className="h-4.5 w-4.5 text-white" />
-              </div>
-              <span className="text-lg font-semibold tracking-tight text-slate-900">
-                Hogar<span className="text-emerald-600">AI</span>
-              </span>
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-8">
-              <Link href="/" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                Inicio
-              </Link>
-              <Link href="/buscar" className="text-sm text-emerald-600 font-medium">
-                Buscar Casa
-              </Link>
-              <Link href="/precios" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
-                Precios
-              </Link>
-            </nav>
-
-            <div className="flex items-center gap-3">
-              {!authLoading && (
-                <>
-                  {user ? (
-                    <div className="hidden md:flex items-center gap-2">
-                      <Link href="/dashboard">
-                        <Button variant="ghost" size="sm" className="text-slate-600">
-                          <User className="h-4 w-4 mr-2" />
-                          Mi Cuenta
-                        </Button>
-                      </Link>
-                      <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-slate-400">
-                        <LogOut className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Link href="/auth/login" className="hidden md:block">
-                      <Button variant="ghost" size="sm" className="text-slate-600">
-                        Iniciar Sesión
-                      </Button>
-                    </Link>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Header */}
+      <Header activeItem="/buscar" />
 
       {/* Main Content */}
       <main className="pt-20">

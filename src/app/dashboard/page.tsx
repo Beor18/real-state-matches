@@ -7,14 +7,10 @@ import Link from 'next/link'
 import { useAuth, useHasSubscription } from '@/components/auth/AuthProvider'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import Header from '@/components/layout/Header'
 import {
-  Home,
   Search,
   Crown,
-  LogOut,
-  Bell,
-  Settings,
   ArrowRight,
   Loader2,
   Heart,
@@ -46,11 +42,6 @@ export default function DashboardPage() {
     return null
   }
 
-  const handleSignOut = async () => {
-    await signOut()
-    router.push('/')
-  }
-
   const handleManageSubscription = async () => {
     try {
       const response = await fetch('/api/stripe/portal', { method: 'POST' })
@@ -66,52 +57,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-white/90 backdrop-blur-md">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                <Home className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900">
-                  Hogar<span className="text-emerald-600">AI</span>
-                </h1>
-              </div>
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/" className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">
-                Inicio
-              </Link>
-              <Link href="/buscar" className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">
-                Buscar Casa
-              </Link>
-              <Link href="/precios" className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">
-                Precios
-              </Link>
-            </nav>
-
-            <div className="flex items-center gap-2">
-              {subscription && (
-                <Badge className="gap-1 bg-emerald-600">
-                  <Crown className="h-3 w-3" />
-                  {subscription.plan_name}
-                </Badge>
-              )}
-              <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Settings className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={handleSignOut}>
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header variant="dashboard" activeItem="/dashboard" />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">

@@ -1,29 +1,15 @@
 'use client'
 
 import { Suspense } from 'react'
-import { motion } from 'framer-motion'
-import Link from 'next/link'
 import LoginForm from '@/components/auth/LoginForm'
-import { Home, Search, Heart, Sparkles } from 'lucide-react'
+import Header from '@/components/layout/Header'
+import { Search, Heart, Sparkles } from 'lucide-react'
 
 function LoginContent() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white">
       {/* Header */}
-      <header className="w-full border-b bg-white/90 backdrop-blur-md">
-        <div className="container mx-auto px-4 py-4">
-          <Link href="/" className="flex items-center gap-3 w-fit">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-              <Home className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">
-                Hogar<span className="text-emerald-600">AI</span>
-              </h1>
-            </div>
-          </Link>
-        </div>
-      </header>
+      <Header variant="minimal" />
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-12">
