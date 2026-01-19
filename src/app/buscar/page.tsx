@@ -92,7 +92,7 @@ export default function BuscarPage() {
   const [step, setStep] = useState<'form' | 'analyzing' | 'results' | 'error'>('form')
   const [answers, setAnswers] = useState({
     lifestyle: '',
-    budget: '3000',
+    budget: '500000',
     location: '',
     purpose: '',
     timeline: '',
@@ -174,7 +174,7 @@ export default function BuscarPage() {
 
   const resetSearch = () => {
     setStep('form')
-    setAnswers({ lifestyle: '', budget: '3000', location: '', purpose: '', timeline: '', priority: '' })
+    setAnswers({ lifestyle: '', budget: '500000', location: '', purpose: '', timeline: '', priority: '' })
     setMatches([])
     setSearchError(null)
   }
@@ -266,21 +266,21 @@ export default function BuscarPage() {
                     {/* Budget */}
                     <div className="space-y-3">
                       <Label className="text-base font-medium">
-                        Presupuesto mensual máximo
+                        Presupuesto máximo
                       </Label>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-500">$500/mes</span>
+                          <span className="text-slate-500">$100,000</span>
                           <span className="font-semibold text-lg text-emerald-600">
-                            ${parseInt(answers.budget).toLocaleString()}/mes
+                            ${parseInt(answers.budget).toLocaleString()}
                           </span>
-                          <span className="text-slate-500">$10,000/mes</span>
+                          <span className="text-slate-500">$2,000,000</span>
                         </div>
                         <Input
                           type="range"
-                          min="500"
-                          max="10000"
-                          step="100"
+                          min="100000"
+                          max="2000000"
+                          step="10000"
                           value={answers.budget}
                           onChange={(e) => setAnswers({ ...answers, budget: e.target.value })}
                           className="w-full accent-emerald-600"

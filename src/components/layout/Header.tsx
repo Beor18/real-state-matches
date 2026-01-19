@@ -29,7 +29,7 @@ interface HeaderProps {
 
 const navItems = [
   { href: '/', label: 'Inicio' },
-  { href: '/buscar', label: 'Buscar Casa' },
+  { href: '/buscar', label: 'Buscar Propiedades' },
   { href: '/precios', label: 'Precios' },
 ]
 
@@ -199,15 +199,6 @@ export default function Header({
               </>
             )}
 
-            {/* CTA Button (optional, for landing page) */}
-            {showCTA && (
-              <Link href="/buscar" className="hidden md:block">
-                <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-5">
-                  Comenzar
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>
-              </Link>
-            )}
 
             {/* Mobile Menu Button */}
             <Button
@@ -295,14 +286,6 @@ export default function Header({
                     </Link>
                   )}
 
-                  {/* CTA in mobile menu */}
-                  {showCTA && (
-                    <Link href="/buscar" onClick={() => setMobileMenuOpen(false)}>
-                      <Button size="sm" className="w-full bg-slate-900 hover:bg-slate-800">
-                        Comenzar Búsqueda
-                      </Button>
-                    </Link>
-                  )}
                 </div>
               </div>
             </motion.div>
