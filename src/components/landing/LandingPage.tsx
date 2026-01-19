@@ -18,6 +18,7 @@ import {
   ArrowRight,
   CheckCircle,
   Star,
+  Crown,
   MapPin,
   Zap,
   Brain,
@@ -27,6 +28,7 @@ import {
   ChevronRight,
   Play,
   Mail,
+  Loader2,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
@@ -66,10 +68,59 @@ function TypewriterText({ words, className }: { words: string[]; className?: str
   )
 }
 
+interface Plan {
+  id: string
+  plan_key: string
+  name: string
+  description: string | null
+  price_monthly: number
+  price_yearly: number
+  features: string[]
+  popular?: boolean
+}
+
+// Icon mapping based on plan key
+const planIcons: Record<string, typeof Star> = {
+  starter: Sparkles,
+  pro: Star,
+  vip: Crown,
+}
+
+// Plan colors based on plan key
+const planColors: Record<string, string> = {
+  starter: 'border-slate-200',
+  pro: 'border-emerald-500',
+  vip: 'border-amber-500',
+}
+
 export default function LandingPage() {
   const { isEnabled } = useModules()
+  const [plans, setPlans] = useState<Plan[]>([])
+  const [loadingPlans, setLoadingPlans] = useState(true)
   
   const hasActiveModules = isEnabled('demand-prediction') || isEnabled('equity-forecast')
+
+  // Fetch plans from API
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const res = await fetch('/api/plans')
+        const data = await res.json()
+        if (data.success) {
+          const plansWithPopular = data.plans.map((plan: Plan) => ({
+            ...plan,
+            popular: plan.plan_key === 'pro',
+          }))
+          setPlans(plansWithPopular)
+        }
+      } catch (error) {
+        console.error('Error fetching plans:', error)
+      } finally {
+        setLoadingPlans(false)
+      }
+    }
+    fetchPlans()
+  }, [])
 
   const stats = [
     { value: '2,500+', label: 'Propiedades analizadas' },
@@ -96,30 +147,6 @@ export default function LandingPage() {
     },
   ]
 
-  const plans = [
-    {
-      name: 'Starter',
-      price: 29,
-      description: 'Para comenzar',
-      features: ['5 búsquedas/mes', 'Matching básico', 'Alertas email'],
-      color: 'border-slate-200',
-    },
-    {
-      name: 'Pro',
-      price: 49,
-      description: 'Más popular',
-      features: ['Búsquedas ilimitadas', 'Matching avanzado', 'Proyecciones plusvalía', 'Soporte prioritario'],
-      popular: true,
-      color: 'border-emerald-500',
-    },
-    {
-      name: 'VIP',
-      price: 99,
-      description: 'Para inversores',
-      features: ['Todo de Pro', 'Consultoría 1:1', 'Acceso anticipado', 'Comunidad exclusiva'],
-      color: 'border-amber-500',
-    },
-  ]
 
   const testimonials = [
     {
@@ -388,54 +415,69 @@ export default function LandingPage() {
               </p>
             </motion.div>
 
-            <motion.div 
-              {...staggerContainer}
-              className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto"
-            >
-              {plans.map((plan, index) => (
-                <motion.div
-                  key={plan.name}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Card className={`relative h-full border-2 ${plan.color} ${plan.popular ? 'shadow-lg shadow-emerald-500/10' : ''}`}>
-                    {plan.popular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <Badge className="bg-emerald-600 text-white">Más popular</Badge>
-                      </div>
-                    )}
-                    <CardContent className="p-6 space-y-6">
-                      <div>
-                        <h3 className="text-xl font-semibold text-slate-900">{plan.name}</h3>
-                        <p className="text-sm text-slate-500">{plan.description}</p>
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-bold text-slate-900">${plan.price}</span>
-                        <span className="text-slate-500">/mes</span>
-                      </div>
-                      <ul className="space-y-3">
-                        {plan.features.map((feature) => (
-                          <li key={feature} className="flex items-center gap-2 text-sm text-slate-600">
-                            <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                      <Link href="/precios" className="block">
-                        <Button 
-                          variant={plan.popular ? 'default' : 'outline'} 
-                          className={`w-full ${plan.popular ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
-                        >
-                          Elegir plan
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </motion.div>
+            {loadingPlans ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              </div>
+            ) : (
+              <motion.div 
+                {...staggerContainer}
+                className={`grid gap-6 max-w-4xl mx-auto ${
+                  plans.length === 1 
+                    ? 'md:grid-cols-1 max-w-md' 
+                    : plans.length === 2 
+                      ? 'md:grid-cols-2 max-w-2xl' 
+                      : 'md:grid-cols-3'
+                }`}
+              >
+                {plans.map((plan, index) => {
+                  const color = planColors[plan.plan_key] || 'border-slate-200'
+                  return (
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Card className={`relative h-full border-2 ${color} ${plan.popular ? 'shadow-lg shadow-emerald-500/10' : ''}`}>
+                        {plan.popular && (
+                          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                            <Badge className="bg-emerald-600 text-white">Más popular</Badge>
+                          </div>
+                        )}
+                        <CardContent className="p-6 space-y-6">
+                          <div>
+                            <h3 className="text-xl font-semibold text-slate-900">{plan.name}</h3>
+                            <p className="text-sm text-slate-500">{plan.description}</p>
+                          </div>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-4xl font-bold text-slate-900">${plan.price_monthly}</span>
+                            <span className="text-slate-500">/mes</span>
+                          </div>
+                          <ul className="space-y-3">
+                            {plan.features.map((feature) => (
+                              <li key={feature} className="flex items-center gap-2 text-sm text-slate-600">
+                                <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                          <Link href="/precios" className="block">
+                            <Button 
+                              variant={plan.popular ? 'default' : 'outline'} 
+                              className={`w-full ${plan.popular ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+                            >
+                              Elegir plan
+                            </Button>
+                          </Link>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )
+                })}
+              </motion.div>
+            )}
 
             <motion.div {...fadeInUp} className="text-center mt-8">
               <Link href="/precios" className="text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-1 text-sm font-medium">

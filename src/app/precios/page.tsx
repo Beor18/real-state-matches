@@ -175,7 +175,13 @@ export default function PreciosPage() {
                 <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
               </div>
             ) : (
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className={`grid gap-6 ${
+                plans.length === 1 
+                  ? 'md:grid-cols-1 max-w-md mx-auto' 
+                  : plans.length === 2 
+                    ? 'md:grid-cols-2 max-w-2xl mx-auto' 
+                    : 'md:grid-cols-3'
+              }`}>
                 {plans.map((plan, index) => {
                   const PlanIcon = planIcons[plan.plan_key] || Star
                   return (
