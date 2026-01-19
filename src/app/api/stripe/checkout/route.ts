@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createCheckoutSession, getOrCreateStripeCustomer, getPriceId, type PlanType, type BillingInterval } from '@/lib/stripe'
+import { createCheckoutSession, getOrCreateStripeCustomer, getPriceIdFromDatabase, getPriceId, type PlanType, type BillingInterval } from '@/lib/stripe'
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,8 +48,20 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id)
     }
 
-    // Get the price ID for the selected plan
-    const priceId = getPriceId(planId, interval)
+    // Get the price ID for the selected plan (from database first, fallback to env vars)
+    let priceId = await getPriceIdFromDatabase(planId, interval)
+    
+    // Fallback to static config if not in database
+    if (!priceId) {
+      priceId = getPriceId(planId, interval)
+    }
+    
+    if (!priceId) {
+      return NextResponse.json(
+        { error: 'Plan no tiene precio configurado en Stripe. Configura el Stripe Price ID en el panel de admin.' },
+        { status: 400 }
+      )
+    }
 
     // Create checkout session
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
