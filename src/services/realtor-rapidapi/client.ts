@@ -395,6 +395,14 @@ class RealtorRapidAPIClient {
       const properties = response.data?.home_search?.properties || []
       const total = response.data?.home_search?.total || properties.length
 
+      console.log('Realtor API Response:', {
+        total,
+        propertiesCount: properties.length,
+        hasData: !!response.data,
+        hasHomeSearch: !!response.data?.home_search,
+        sampleProperty: properties[0] ? { id: properties[0].property_id, price: properties[0].list_price } : null,
+      })
+
       const normalizedProperties = properties.map(p => this.transformToNormalized(p))
 
       return {

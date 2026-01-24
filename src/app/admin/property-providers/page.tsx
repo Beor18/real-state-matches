@@ -94,6 +94,24 @@ export default function PropertyProvidersPage() {
     fetchProviders()
   }, [fetchProviders])
 
+  // Sync form states with loaded provider data
+  useEffect(() => {
+    if (providers.length > 0) {
+      setFormStates(prev => {
+        const newStates = { ...prev }
+        providers.forEach(provider => {
+          if (provider.additionalConfig && Object.keys(provider.additionalConfig).length > 0) {
+            newStates[provider.key] = {
+              ...prev[provider.key],
+              additionalConfig: { ...provider.additionalConfig },
+            }
+          }
+        })
+        return newStates
+      })
+    }
+  }, [providers])
+
   const handleToggle = async (providerKey: PropertyProvider) => {
     setSavingProvider(providerKey)
     

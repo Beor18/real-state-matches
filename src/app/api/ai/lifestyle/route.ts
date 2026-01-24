@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Search location resolved:', { searchCity, searchState, searchZipCode, locationSource })
 
-    // Get properties from active providers
+    // Get properties from active providers (limit is calculated dynamically based on search_settings)
     const propertyResult = await searchPropertiesFromProviders({
       city: searchCity,
       state: searchState,
@@ -106,7 +106,6 @@ export async function POST(request: NextRequest) {
       maxPrice: budget ? budget * 1.3 : undefined,
       propertyType: preferredPropertyTypes?.[0],
       status: 'active',
-      limit: 30,
     })
 
     let matches: any[] = []
@@ -117,10 +116,16 @@ export async function POST(request: NextRequest) {
     }
 
     if (propertyResult.properties.length > 0) {
+      // Limit properties sent to AI based on search settings
+      const maxForAI = propertyResult.searchSettings.max_properties_for_ai
+      const propertiesForAI = propertyResult.properties.slice(0, maxForAI)
+      
+      console.log(`Sending ${propertiesForAI.length} properties to AI (max: ${maxForAI}, total available: ${propertyResult.properties.length})`)
+      
       // Match properties with profile using AI
       const matchResult = await matchPropertiesWithProfile(
         { idealLifeDescription, priorities: priorities || '', budget, location, preferredPropertyTypes },
-        propertyResult.properties.map((p) => ({
+        propertiesForAI.map((p) => ({
           id: p.id,
           title: p.title,
           description: p.description,

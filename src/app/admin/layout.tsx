@@ -15,7 +15,8 @@ import {
   Brain,
   Database,
   CreditCard,
-  Package
+  Package,
+  Search
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -29,6 +30,7 @@ const navItems = [
   { href: '/admin/modules', label: 'Módulos', icon: Puzzle },
   { href: '/admin/ai', label: 'Configuración IA', icon: Brain },
   { href: '/admin/property-providers', label: 'Proveedores de Datos', icon: Database },
+  { href: '/admin/search-settings', label: 'Configuración de Búsqueda', icon: Search },
   { href: '/admin/subscriptions', label: 'Suscripciones', icon: CreditCard },
   { href: '/admin/plans', label: 'Planes', icon: Package },
   { href: '/admin/users', label: 'Usuarios', icon: Users },

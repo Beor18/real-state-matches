@@ -187,16 +187,30 @@ Responde en formato JSON:
 `
 
   try {
+    console.log(`Matching ${properties.length} properties with AI...`)
+    
     const response = await chatCompletion(
       [
         { role: 'system', content: SYSTEM_PROMPTS.propertyMatching },
         { role: 'user', content: prompt }
       ],
-      { temperature: 0.6, maxTokens: 3000, jsonMode: true }
+      { temperature: 0.6, maxTokens: 8000, jsonMode: true }
     )
 
     const parsed = JSON.parse(response)
-    return { matches: parsed.matches || [] }
+    const matches = parsed.matches || []
+    
+    console.log(`AI returned ${matches.length} matches from ${properties.length} properties`)
+    
+    // Log distribution by source provider (from property ID prefix)
+    const bySource: Record<string, number> = {}
+    matches.forEach((m: { propertyId: string }) => {
+      const source = m.propertyId.split('-')[0] || 'unknown'
+      bySource[source] = (bySource[source] || 0) + 1
+    })
+    console.log('Matches by source:', bySource)
+    
+    return { matches }
   } catch (error) {
     console.error('Error matching properties:', error)
     throw new Error('Failed to match properties')

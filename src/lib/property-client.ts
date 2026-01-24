@@ -26,6 +26,22 @@ interface ProviderSettings {
   priority: number
 }
 
+// Search settings interface
+export interface SearchSettings {
+  max_properties_total: number
+  max_properties_per_provider: number | null
+  max_properties_for_ai: number
+  min_properties_per_provider: number
+}
+
+// Default search settings
+const DEFAULT_SEARCH_SETTINGS: SearchSettings = {
+  max_properties_total: 60,
+  max_properties_per_provider: null, // Auto-distribute
+  max_properties_for_ai: 60,
+  min_properties_per_provider: 5,
+}
+
 // Unified property provider interface
 interface PropertyProviderClient {
   searchNormalized(params: PropertySearchParams): Promise<PropertySearchResponse>
@@ -52,6 +68,34 @@ async function getProviderSettings(): Promise<ProviderSettings[]> {
   } catch (error) {
     console.error('Error in getProviderSettings:', error)
     return []
+  }
+}
+
+// Get search settings from database
+export async function getSearchSettings(): Promise<SearchSettings> {
+  try {
+    const supabase = await createClient()
+    
+    const { data, error } = await supabase
+      .from('search_settings')
+      .select('max_properties_total, max_properties_per_provider, max_properties_for_ai, min_properties_per_provider')
+      .limit(1)
+      .single()
+
+    if (error) {
+      console.log('Using default search settings (table may not exist yet)')
+      return DEFAULT_SEARCH_SETTINGS
+    }
+
+    return {
+      max_properties_total: data.max_properties_total ?? DEFAULT_SEARCH_SETTINGS.max_properties_total,
+      max_properties_per_provider: data.max_properties_per_provider,
+      max_properties_for_ai: data.max_properties_for_ai ?? DEFAULT_SEARCH_SETTINGS.max_properties_for_ai,
+      min_properties_per_provider: data.min_properties_per_provider ?? DEFAULT_SEARCH_SETTINGS.min_properties_per_provider,
+    }
+  } catch (error) {
+    console.error('Error in getSearchSettings:', error)
+    return DEFAULT_SEARCH_SETTINGS
   }
 }
 
@@ -149,8 +193,10 @@ export async function searchPropertiesFromProviders(
   totalByProvider: Record<string, number>
   errors: Record<string, string>
   providersQueried: PropertyProvider[]
+  searchSettings: SearchSettings
 }> {
   const { clients } = await getActivePropertyClients()
+  const searchSettings = await getSearchSettings()
   
   if (clients.length === 0) {
     return {
@@ -159,12 +205,25 @@ export async function searchPropertiesFromProviders(
       totalByProvider: {},
       errors: { general: 'No hay proveedores de propiedades configurados o activos' },
       providersQueried: [],
+      searchSettings,
     }
   }
 
+  // Calculate limit per provider dynamically
+  const numProviders = clients.length
+  const limitPerProvider = searchSettings.max_properties_per_provider 
+    ?? Math.max(
+        searchSettings.min_properties_per_provider,
+        Math.ceil(searchSettings.max_properties_total / numProviders)
+      )
+  
+  console.log(`Search settings: total=${searchSettings.max_properties_total}, providers=${numProviders}, limitPerProvider=${limitPerProvider}`)
+
   const results = await Promise.allSettled(
     clients.map(async ({ provider, client }) => {
-      const response = await client.searchNormalized(params)
+      // Override the limit with calculated value
+      const providerParams = { ...params, limit: limitPerProvider }
+      const response = await client.searchNormalized(providerParams)
       return { provider, response }
     })
   )
@@ -180,9 +239,11 @@ export async function searchPropertiesFromProviders(
       providersQueried.push(provider)
       
       if (response.success) {
+        console.log(`Provider ${provider}: ${response.properties.length} properties returned (total: ${response.total})`)
         allProperties.push(...response.properties)
         totalByProvider[provider] = response.total
       } else {
+        console.log(`Provider ${provider} error:`, response.error)
         errors[provider] = response.error || 'Unknown error'
       }
     } else {
@@ -190,6 +251,8 @@ export async function searchPropertiesFromProviders(
       console.error('Provider search failed:', result.reason)
     }
   }
+  
+  console.log(`Total properties combined: ${allProperties.length} from ${providersQueried.length} providers`)
 
   // Sort by price (could be made configurable)
   allProperties.sort((a, b) => {
@@ -206,6 +269,7 @@ export async function searchPropertiesFromProviders(
     totalByProvider,
     errors,
     providersQueried,
+    searchSettings,
   }
 }
 
