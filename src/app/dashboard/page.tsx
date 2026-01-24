@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useAuth, useHasSubscription } from '@/components/auth/AuthProvider'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import Header from '@/components/layout/Header'
 import {
   Search,
@@ -16,12 +17,41 @@ import {
   Heart,
   Sparkles,
   CreditCard,
+  MapPin,
+  Bed,
+  Bath,
+  Maximize,
+  DollarSign,
+  Trash2,
+  ExternalLink,
 } from 'lucide-react'
+
+interface SavedProperty {
+  id: string
+  property_id: string
+  source_provider: string
+  property_data: {
+    id: string
+    title: string
+    price: number
+    address: string
+    city?: string
+    bedrooms: number
+    bathrooms: number
+    squareFeet: number
+    images?: string[]
+    matchScore?: number
+  }
+  saved_at: string
+}
 
 export default function DashboardPage() {
   const { user, dbUser, subscription, isLoading, signOut } = useAuth()
   const hasSubscription = useHasSubscription()
   const router = useRouter()
+  const [savedProperties, setSavedProperties] = useState<SavedProperty[]>([])
+  const [loadingSaved, setLoadingSaved] = useState(true)
+  const [removingId, setRemovingId] = useState<string | null>(null)
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -29,6 +59,45 @@ export default function DashboardPage() {
       router.push('/auth/login')
     }
   }, [isLoading, user, router])
+
+  // Fetch saved properties
+  useEffect(() => {
+    if (user) {
+      fetchSavedProperties()
+    }
+  }, [user])
+
+  const fetchSavedProperties = async () => {
+    try {
+      setLoadingSaved(true)
+      const response = await fetch('/api/saved-properties')
+      const data = await response.json()
+      if (data.success) {
+        setSavedProperties(data.savedProperties || [])
+      }
+    } catch (error) {
+      console.error('Error fetching saved properties:', error)
+    } finally {
+      setLoadingSaved(false)
+    }
+  }
+
+  const removeProperty = async (propertyId: string) => {
+    setRemovingId(propertyId)
+    try {
+      const response = await fetch(`/api/saved-properties?propertyId=${propertyId}`, {
+        method: 'DELETE',
+      })
+      const data = await response.json()
+      if (data.success) {
+        setSavedProperties(prev => prev.filter(p => p.property_id !== propertyId))
+      }
+    } catch (error) {
+      console.error('Error removing property:', error)
+    } finally {
+      setRemovingId(null)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -147,29 +216,144 @@ export default function DashboardPage() {
             </div>
           </motion.div>
 
-          {/* Recent Activity / Saved Searches */}
+          {/* Saved Properties */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
+            className="space-y-4"
           >
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle>Búsquedas Recientes</CardTitle>
-                <CardDescription>Tus últimas búsquedas de propiedades</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-slate-500">
-                  <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-40" />
-                  <p>Aún no has realizado búsquedas</p>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                <Heart className="h-5 w-5 text-rose-500" />
+                Propiedades Guardadas
+              </h3>
+              {savedProperties.length > 0 && (
+                <Badge variant="secondary">{savedProperties.length}</Badge>
+              )}
+            </div>
+            
+            {loadingSaved ? (
+              <Card className="border-2">
+                <CardContent className="p-8 text-center">
+                  <Loader2 className="h-8 w-8 mx-auto animate-spin text-slate-400" />
+                </CardContent>
+              </Card>
+            ) : savedProperties.length === 0 ? (
+              <Card className="border-2">
+                <CardContent className="p-8 text-center text-slate-500">
+                  <Heart className="h-12 w-12 mx-auto mb-4 opacity-40" />
+                  <p>Aún no has guardado propiedades</p>
                   <Link href="/buscar">
                     <Button variant="link" className="mt-2 text-emerald-600">
-                      Comenzar a buscar
+                      Buscar propiedades
                     </Button>
                   </Link>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {savedProperties.slice(0, 4).map((saved) => {
+                  const property = saved.property_data
+                  return (
+                    <motion.div
+                      key={saved.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      layout
+                    >
+                      <Card className="border-2 hover:border-emerald-200 hover:shadow-lg transition-all overflow-hidden">
+                        <div className="flex">
+                          {/* Image */}
+                          {property.images && property.images.length > 0 ? (
+                            <div className="w-32 h-32 flex-shrink-0">
+                              <img
+                                src={property.images[0]}
+                                alt={property.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-32 h-32 flex-shrink-0 bg-slate-100 flex items-center justify-center">
+                              <MapPin className="h-8 w-8 text-slate-300" />
+                            </div>
+                          )}
+                          
+                          {/* Content */}
+                          <div className="flex-1 p-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-slate-900 truncate">{property.title}</h4>
+                                <p className="text-xs text-slate-500 flex items-center gap-1 truncate">
+                                  <MapPin className="h-3 w-3 flex-shrink-0" />
+                                  {property.city ? `${property.address}, ${property.city}` : property.address}
+                                </p>
+                              </div>
+                              {property.matchScore && (
+                                <Badge className="bg-slate-900 text-white shrink-0">
+                                  {property.matchScore}%
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            {/* Stats */}
+                            <div className="flex items-center gap-4 mt-2 text-xs text-slate-600">
+                              <span className="flex items-center gap-1">
+                                <DollarSign className="h-3 w-3 text-emerald-600" />
+                                ${property.price.toLocaleString()}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Bed className="h-3 w-3" />
+                                {property.bedrooms}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Bath className="h-3 w-3" />
+                                {property.bathrooms}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Maximize className="h-3 w-3" />
+                                {property.squareFeet?.toLocaleString()} ft²
+                              </span>
+                            </div>
+                            
+                            {/* Actions */}
+                            <div className="flex items-center gap-2 mt-3">
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                                <ExternalLink className="h-3 w-3" />
+                                Ver
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 text-xs gap-1 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                                onClick={() => removeProperty(saved.property_id)}
+                                disabled={removingId === saved.property_id}
+                              >
+                                {removingId === saved.property_id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-3 w-3" />
+                                )}
+                                Quitar
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            )}
+            
+            {savedProperties.length > 4 && (
+              <div className="text-center">
+                <Button variant="outline" className="gap-2">
+                  Ver todas ({savedProperties.length})
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </motion.div>
 
           {/* Subscription Management */}

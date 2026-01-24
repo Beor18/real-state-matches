@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useAuth } from '@/components/auth/AuthProvider'
@@ -101,6 +101,92 @@ export default function BuscarPage() {
   const [matches, setMatches] = useState<PropertyMatch[]>([])
   const [searchError, setSearchError] = useState<SearchError | null>(null)
   const [providersQueried, setProvidersQueried] = useState<string[]>([])
+  const [savedPropertyIds, setSavedPropertyIds] = useState<Set<string>>(new Set())
+  const [savingPropertyId, setSavingPropertyId] = useState<string | null>(null)
+
+  // Fetch saved properties on mount if user is logged in
+  useEffect(() => {
+    if (user) {
+      fetchSavedProperties()
+    }
+  }, [user])
+
+  const fetchSavedProperties = async () => {
+    try {
+      const response = await fetch('/api/saved-properties')
+      const data = await response.json()
+      if (data.success && data.savedProperties) {
+        const ids = new Set(data.savedProperties.map((p: any) => p.property_id))
+        setSavedPropertyIds(ids as Set<string>)
+      }
+    } catch (error) {
+      console.error('Error fetching saved properties:', error)
+    }
+  }
+
+  const toggleSaveProperty = async (match: PropertyMatch) => {
+    if (!user) {
+      // Could show login prompt
+      return
+    }
+
+    setSavingPropertyId(match.id)
+    const isSaved = savedPropertyIds.has(match.id)
+
+    try {
+      if (isSaved) {
+        // Remove from saved
+        const response = await fetch(`/api/saved-properties?propertyId=${match.id}`, {
+          method: 'DELETE',
+        })
+        const data = await response.json()
+        if (data.success) {
+          setSavedPropertyIds(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(match.id)
+            return newSet
+          })
+        }
+      } else {
+        // Save property
+        const response = await fetch('/api/saved-properties', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            property: {
+              id: match.id,
+              sourceProvider: match.sourceProvider || 'unknown',
+              externalId: match.id,
+              title: match.title,
+              description: '',
+              price: match.price,
+              address: match.address,
+              city: match.city || '',
+              state: '',
+              zipCode: '',
+              bedrooms: match.bedrooms,
+              bathrooms: match.bathrooms,
+              squareFeet: match.squareFeet,
+              propertyType: 'residential',
+              features: [],
+              amenities: match.amenities,
+              images: match.images || [],
+              matchScore: match.matchScore,
+              matchReasons: match.matchReasons,
+            },
+          }),
+        })
+        const data = await response.json()
+        if (data.success) {
+          setSavedPropertyIds(prev => new Set(prev).add(match.id))
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling save property:', error)
+    } finally {
+      setSavingPropertyId(null)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -605,16 +691,40 @@ export default function BuscarPage() {
                         
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between gap-2">
-                            <div className="space-y-1">
+                            <div className="space-y-1 flex-1">
                               <CardTitle className="text-lg">{match.title}</CardTitle>
                               <CardDescription className="flex items-center gap-1">
                                 <MapPin className="h-3 w-3" />
                                 {match.city ? `${match.address}, ${match.city}` : match.address}
                               </CardDescription>
                             </div>
-                            <Badge className="bg-slate-900 text-white shrink-0">
-                              {match.matchScore}%
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-slate-900 text-white shrink-0">
+                                {match.matchScore}%
+                              </Badge>
+                              {user && (
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    toggleSaveProperty(match)
+                                  }}
+                                  disabled={savingPropertyId === match.id}
+                                  className={`p-2 rounded-full transition-all ${
+                                    savedPropertyIds.has(match.id)
+                                      ? 'bg-red-100 text-red-500 hover:bg-red-200'
+                                      : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                                  }`}
+                                  title={savedPropertyIds.has(match.id) ? 'Quitar de guardados' : 'Guardar propiedad'}
+                                >
+                                  {savingPropertyId === match.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Heart className={`h-4 w-4 ${savedPropertyIds.has(match.id) ? 'fill-current' : ''}`} />
+                                  )}
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
