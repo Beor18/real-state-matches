@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useAuth } from '@/components/auth/AuthProvider'
+import { PageGuard } from '@/components/PageGuard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -112,6 +113,11 @@ export default function PreciosPage() {
   }
 
   return (
+    <PageGuard 
+      pageKey="page-precios"
+      disabledTitle="Precios no disponibles"
+      disabledMessage="La página de precios no está disponible en este momento. Contacta al administrador para más información."
+    >
     <div className="min-h-screen bg-white">
       {/* Header */}
       <Header activeItem="/precios" />
@@ -350,6 +356,7 @@ export default function PreciosPage() {
         </section>
       </main>
     </div>
+    </PageGuard>
   )
 }
 

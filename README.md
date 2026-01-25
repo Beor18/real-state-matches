@@ -8,7 +8,7 @@ Una plataforma de inteligencia inmobiliaria con IA para Puerto Rico y Latinoamé
 - **Backend**: Next.js API Routes
 - **Base de Datos**: Supabase (PostgreSQL)
 - **Autenticación**: Supabase Auth (Magic Link)
-- **Pagos**: Stripe
+- **Pagos**: Stripe / Mercado Pago
 - **IA**: OpenAI GPT-4o
 - **Propiedades**: Showcase IDX Integration
 
@@ -33,6 +33,11 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_PRICE_STARTER=price_...
 STRIPE_PRICE_PRO=price_...
 STRIPE_PRICE_VIP=price_...
+
+# Mercado Pago (alternativa a Stripe para Argentina/LATAM)
+MP_ACCESS_TOKEN=APP_USR-xxx
+MP_PUBLIC_KEY=APP_USR-xxx
+MP_WEBHOOK_SECRET=opcional_secret
 
 # Showcase IDX (opcional - usa mock data si no está configurado)
 SHOWCASE_IDX_API_KEY=tu-api-key
@@ -67,6 +72,21 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
      - `customer.subscription.created`
      - `customer.subscription.updated`
      - `customer.subscription.deleted`
+
+### 3b. Configuración de Mercado Pago (Alternativa)
+
+1. Crea una cuenta en [Mercado Pago Developers](https://www.mercadopago.com.ar/developers)
+2. Crea una aplicación en el Panel de Desarrolladores
+3. Obtén tu Access Token y Public Key (credenciales de producción o sandbox)
+4. Configura un webhook endpoint: `https://tu-dominio.com/api/mercadopago/webhook`
+   - Eventos a escuchar:
+     - `subscription_preapproval`
+     - `subscription_authorized_payment`
+     - `payment`
+5. Desde el Admin Panel (`/admin/settings`):
+   - Verifica la conexión con el botón "Probar Conexión"
+   - Crea los planes de suscripción con "Crear Planes en MP"
+   - Selecciona Mercado Pago como gateway activo
 
 ### 4. Instalación
 
@@ -151,10 +171,12 @@ src/
 - Posts, stories, scripts de video
 - Optimizado para múltiples plataformas
 
-### 6. Suscripciones con Stripe
+### 6. Suscripciones con Stripe / Mercado Pago
 - 3 planes: Starter, Pro, VIP
-- Checkout integrado
+- Checkout integrado (Stripe o MP según configuración)
+- Selector de gateway en Panel Admin
 - Portal de cliente para gestión
+- Soporte para Argentina/LATAM con Mercado Pago
 
 ## Flujos Principales
 

@@ -1,7 +1,7 @@
 // Module Configuration for SREIS (Smart Real Estate Intelligence System)
 // Defines all available modules that can be enabled/disabled by admin
 
-export type ModuleCategory = 'sreis-engines' | 'marketing' | 'notifications' | 'general'
+export type ModuleCategory = 'sreis-engines' | 'marketing' | 'notifications' | 'general' | 'pages'
 
 export interface ModuleConfig {
   key: string
@@ -171,6 +171,11 @@ export const MODULE_CATEGORIES: Record<ModuleCategory, { name: string; descripti
     name: 'General',
     description: 'Funcionalidades generales del sistema',
     icon: 'Settings'
+  },
+  'pages': {
+    name: 'Páginas Públicas',
+    description: 'Control de visibilidad de páginas de la aplicación',
+    icon: 'FileText'
   }
 }
 

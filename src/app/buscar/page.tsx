@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useAuth } from '@/components/auth/AuthProvider'
+import { PageGuard } from '@/components/PageGuard'
 import { SubscriptionGate } from '@/components/paywall/SubscriptionGate'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -266,6 +267,11 @@ export default function BuscarPage() {
   }
 
   return (
+    <PageGuard 
+      pageKey="page-buscar"
+      disabledTitle="Búsqueda no disponible"
+      disabledMessage="La búsqueda de propiedades no está disponible en este momento. Contacta al administrador para más información."
+    >
     <div className="min-h-screen bg-white">
       {/* Header */}
       <Header activeItem="/buscar" />
@@ -851,5 +857,6 @@ export default function BuscarPage() {
         </AnimatePresence>
       </main>
     </div>
+    </PageGuard>
   )
 }

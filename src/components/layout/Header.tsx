@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/components/auth/AuthProvider'
+import { usePageConfig } from '@/hooks/usePageConfig'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -27,10 +28,11 @@ interface HeaderProps {
   activeItem?: string
 }
 
-const navItems = [
-  { href: '/', label: 'Inicio' },
-  { href: '/buscar', label: 'Buscar Propiedades' },
-  { href: '/precios', label: 'Precios' },
+// Default nav items configuration
+const defaultNavItems = [
+  { href: '/', label: 'Inicio', pageKey: 'page-home' },
+  { href: '/buscar', label: 'Buscar Propiedades', pageKey: 'page-buscar' },
+  { href: '/precios', label: 'Precios', pageKey: 'page-precios' },
 ]
 
 export default function Header({ 
@@ -40,11 +42,26 @@ export default function Header({
   activeItem,
 }: HeaderProps) {
   const { user, dbUser, subscription, signOut, isLoading: authLoading } = useAuth()
+  const { isPageEnabled, isLoading: pagesLoading } = usePageConfig()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
 
   const isAdmin = dbUser?.role === 'admin'
   const hasSubscription = subscription?.status === 'active'
+
+  // Filter nav items based on page visibility settings
+  // Admins can see all pages, regular users only see enabled pages
+  const navItems = useMemo(() => {
+    if (pagesLoading) return defaultNavItems // Show all while loading
+    return defaultNavItems.filter(item => {
+      // Always show home
+      if (item.href === '/') return true
+      // Admins see all pages
+      if (isAdmin) return true
+      // Check if page is enabled
+      return isPageEnabled(item.pageKey)
+    })
+  }, [isPageEnabled, isAdmin, pagesLoading])
 
   // Determine active nav item
   const getActiveItem = () => {

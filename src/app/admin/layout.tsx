@@ -16,7 +16,8 @@ import {
   Database,
   CreditCard,
   Package,
-  Search
+  Search,
+  FileText
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -28,6 +29,7 @@ interface AdminLayoutProps {
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/modules', label: 'Módulos', icon: Puzzle },
+  { href: '/admin/pages', label: 'Páginas Públicas', icon: FileText },
   { href: '/admin/ai', label: 'Configuración IA', icon: Brain },
   { href: '/admin/property-providers', label: 'Proveedores de Datos', icon: Database },
   { href: '/admin/search-settings', label: 'Configuración de Búsqueda', icon: Search },
