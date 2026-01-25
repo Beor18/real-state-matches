@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useAuth, useHasSubscription } from '@/components/auth/AuthProvider'
+import { usePageConfig } from '@/hooks/usePageConfig'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -48,10 +49,15 @@ interface SavedProperty {
 export default function DashboardPage() {
   const { user, dbUser, subscription, isLoading, signOut } = useAuth()
   const hasSubscription = useHasSubscription()
+  const { isPageEnabled } = usePageConfig()
   const router = useRouter()
   const [savedProperties, setSavedProperties] = useState<SavedProperty[]>([])
   const [loadingSaved, setLoadingSaved] = useState(true)
   const [removingId, setRemovingId] = useState<string | null>(null)
+
+  // Check if pages are enabled
+  const isPreciosEnabled = isPageEnabled('page-precios')
+  const isBuscarEnabled = isPageEnabled('page-buscar')
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -150,8 +156,8 @@ export default function DashboardPage() {
             </div>
           </motion.div>
 
-          {/* Subscription CTA (if no subscription) */}
-          {!hasSubscription && (
+          {/* Subscription CTA (if no subscription and precios page is enabled) */}
+          {!hasSubscription && isPreciosEnabled && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -191,26 +197,36 @@ export default function DashboardPage() {
             className="space-y-4"
           >
             <h3 className="text-lg font-semibold text-slate-900">Acceso Rápido</h3>
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className={`grid gap-4 ${
+              isBuscarEnabled && isPreciosEnabled 
+                ? 'md:grid-cols-3' 
+                : isBuscarEnabled || isPreciosEnabled 
+                  ? 'md:grid-cols-2' 
+                  : 'md:grid-cols-1'
+            }`}>
+              {isBuscarEnabled && (
+                <QuickActionCard
+                  href="/buscar"
+                  icon={Search}
+                  title="Buscar Casa"
+                  description="Encuentra tu hogar ideal"
+                  color="from-emerald-500 to-teal-600"
+                />
+              )}
+              {isPreciosEnabled && (
+                <QuickActionCard
+                  href="/precios"
+                  icon={Crown}
+                  title="Mi Plan"
+                  description={subscription?.plan_name || 'Ver planes disponibles'}
+                  color="from-amber-500 to-orange-600"
+                />
+              )}
               <QuickActionCard
-                href="/buscar"
-                icon={Search}
-                title="Buscar Casa"
-                description="Encuentra tu hogar ideal"
-                color="from-emerald-500 to-teal-600"
-              />
-              <QuickActionCard
-                href="/precios"
-                icon={Crown}
-                title="Mi Plan"
-                description={subscription?.plan_name || 'Ver planes disponibles'}
-                color="from-amber-500 to-orange-600"
-              />
-              <QuickActionCard
-                href="#"
+                href="#saved"
                 icon={Heart}
                 title="Guardados"
-                description="Propiedades favoritas"
+                description={`${savedProperties.length} propiedades`}
                 color="from-pink-500 to-rose-600"
               />
             </div>
@@ -244,11 +260,13 @@ export default function DashboardPage() {
                 <CardContent className="p-8 text-center text-slate-500">
                   <Heart className="h-12 w-12 mx-auto mb-4 opacity-40" />
                   <p>Aún no has guardado propiedades</p>
-                  <Link href="/buscar">
-                    <Button variant="link" className="mt-2 text-emerald-600">
-                      Buscar propiedades
-                    </Button>
-                  </Link>
+                  {isBuscarEnabled && (
+                    <Link href="/buscar">
+                      <Button variant="link" className="mt-2 text-emerald-600">
+                        Buscar propiedades
+                      </Button>
+                    </Link>
+                  )}
                 </CardContent>
               </Card>
             ) : (
