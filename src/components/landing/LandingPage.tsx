@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { ModuleSection } from '@/components/modules/ModuleWrapper'
 import { useModules } from '@/hooks/useModules'
+import { usePageConfig } from '@/hooks/usePageConfig'
 import DemandPredictionEngine from '@/components/reai/DemandPredictionEngine'
 import EquityForecast from '@/components/reai/EquityForecast'
 import Header from '@/components/layout/Header'
@@ -95,10 +96,15 @@ const planColors: Record<string, string> = {
 
 export default function LandingPage() {
   const { isEnabled } = useModules()
+  const { isPageEnabled } = usePageConfig()
   const [plans, setPlans] = useState<Plan[]>([])
   const [loadingPlans, setLoadingPlans] = useState(true)
   
   const hasActiveModules = isEnabled('demand-prediction') || isEnabled('equity-forecast')
+  
+  // Check if pages are enabled
+  const isPreciosEnabled = isPageEnabled('page-precios')
+  const isBuscarEnabled = isPageEnabled('page-buscar')
 
   // Fetch plans from API
   useEffect(() => {
@@ -228,12 +234,14 @@ export default function LandingPage() {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                <Link href="/buscar">
-                  <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8 h-14 text-base">
-                    <Search className="h-5 w-5 mr-2" />
-                    Comenzar ahora
-                  </Button>
-                </Link>
+                {isBuscarEnabled && (
+                  <Link href="/buscar">
+                    <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8 h-14 text-base">
+                      <Search className="h-5 w-5 mr-2" />
+                      Comenzar ahora
+                    </Button>
+                  </Link>
+                )}
                 <Button size="lg" variant="outline" className="rounded-full px-8 h-14 text-base border-slate-200">
                   <Play className="h-5 w-5 mr-2" />
                   Ver cómo funciona
@@ -307,14 +315,16 @@ export default function LandingPage() {
               ))}
             </motion.div>
 
-            <motion.div {...fadeInUp} className="text-center mt-16">
-              <Link href="/buscar">
-                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 rounded-full px-8 h-14">
-                  Probarlo ahora
-                  <ArrowRight className="h-5 w-5 ml-2" />
-                </Button>
-              </Link>
-            </motion.div>
+            {isBuscarEnabled && (
+              <motion.div {...fadeInUp} className="text-center mt-16">
+                <Link href="/buscar">
+                  <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 rounded-full px-8 h-14">
+                    Probarlo ahora
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                  </Button>
+                </Link>
+              </motion.div>
+            )}
           </div>
         </section>
 
@@ -403,90 +413,92 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Pricing Preview */}
-        <section className="py-24 md:py-32">
-          <div className="max-w-6xl mx-auto px-6">
-            <motion.div {...fadeInUp} className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                Invierte en encontrar tu lugar
-              </h2>
-              <p className="text-lg text-slate-500">
-                Planes flexibles que se adaptan a tu búsqueda. Cancela cuando quieras.
-              </p>
-            </motion.div>
-
-            {loadingPlans ? (
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-              </div>
-            ) : (
-              <motion.div 
-                {...staggerContainer}
-                className={`grid gap-6 max-w-4xl mx-auto ${
-                  plans.length === 1 
-                    ? 'md:grid-cols-1 max-w-md' 
-                    : plans.length === 2 
-                      ? 'md:grid-cols-2 max-w-2xl' 
-                      : 'md:grid-cols-3'
-                }`}
-              >
-                {plans.map((plan, index) => {
-                  const color = planColors[plan.plan_key] || 'border-slate-200'
-                  return (
-                    <motion.div
-                      key={plan.id}
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <Card className={`relative h-full border-2 ${color} ${plan.popular ? 'shadow-lg shadow-emerald-500/10' : ''}`}>
-                        {plan.popular && (
-                          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                            <Badge className="bg-emerald-600 text-white">Más popular</Badge>
-                          </div>
-                        )}
-                        <CardContent className="p-6 space-y-6">
-                          <div>
-                            <h3 className="text-xl font-semibold text-slate-900">{plan.name}</h3>
-                            <p className="text-sm text-slate-500">{plan.description}</p>
-                          </div>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-4xl font-bold text-slate-900">${plan.price_monthly}</span>
-                            <span className="text-slate-500">/mes</span>
-                          </div>
-                          <ul className="space-y-3">
-                            {plan.features.map((feature) => (
-                              <li key={feature} className="flex items-center gap-2 text-sm text-slate-600">
-                                <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
-                                {feature}
-                              </li>
-                            ))}
-                          </ul>
-                          <Link href="/precios" className="block">
-                            <Button 
-                              variant={plan.popular ? 'default' : 'outline'} 
-                              className={`w-full ${plan.popular ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
-                            >
-                              Elegir plan
-                            </Button>
-                          </Link>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  )
-                })}
+        {/* Pricing Preview - Only show if precios page is enabled */}
+        {isPreciosEnabled && (
+          <section className="py-24 md:py-32">
+            <div className="max-w-6xl mx-auto px-6">
+              <motion.div {...fadeInUp} className="text-center mb-16">
+                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                  Invierte en encontrar tu lugar
+                </h2>
+                <p className="text-lg text-slate-500">
+                  Planes flexibles que se adaptan a tu búsqueda. Cancela cuando quieras.
+                </p>
               </motion.div>
-            )}
 
-            <motion.div {...fadeInUp} className="text-center mt-8">
-              <Link href="/precios" className="text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-1 text-sm font-medium">
-                Ver todos los detalles
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </motion.div>
-          </div>
-        </section>
+              {loadingPlans ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+                </div>
+              ) : (
+                <motion.div 
+                  {...staggerContainer}
+                  className={`grid gap-6 max-w-4xl mx-auto ${
+                    plans.length === 1 
+                      ? 'md:grid-cols-1 max-w-md' 
+                      : plans.length === 2 
+                        ? 'md:grid-cols-2 max-w-2xl' 
+                        : 'md:grid-cols-3'
+                  }`}
+                >
+                  {plans.map((plan, index) => {
+                    const color = planColors[plan.plan_key] || 'border-slate-200'
+                    return (
+                      <motion.div
+                        key={plan.id}
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Card className={`relative h-full border-2 ${color} ${plan.popular ? 'shadow-lg shadow-emerald-500/10' : ''}`}>
+                          {plan.popular && (
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                              <Badge className="bg-emerald-600 text-white">Más popular</Badge>
+                            </div>
+                          )}
+                          <CardContent className="p-6 space-y-6">
+                            <div>
+                              <h3 className="text-xl font-semibold text-slate-900">{plan.name}</h3>
+                              <p className="text-sm text-slate-500">{plan.description}</p>
+                            </div>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-4xl font-bold text-slate-900">${plan.price_monthly}</span>
+                              <span className="text-slate-500">/mes</span>
+                            </div>
+                            <ul className="space-y-3">
+                              {plan.features.map((feature) => (
+                                <li key={feature} className="flex items-center gap-2 text-sm text-slate-600">
+                                  <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                                  {feature}
+                                </li>
+                              ))}
+                            </ul>
+                            <Link href="/precios" className="block">
+                              <Button 
+                                variant={plan.popular ? 'default' : 'outline'} 
+                                className={`w-full ${plan.popular ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+                              >
+                                Elegir plan
+                              </Button>
+                            </Link>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    )
+                  })}
+                </motion.div>
+              )}
+
+              <motion.div {...fadeInUp} className="text-center mt-8">
+                <Link href="/precios" className="text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-1 text-sm font-medium">
+                  Ver todos los detalles
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </motion.div>
+            </div>
+          </section>
+        )}
 
         {/* Testimonials */}
         <section className="py-24 md:py-32 bg-slate-50">
@@ -596,25 +608,27 @@ export default function LandingPage() {
           </section>
         )}
 
-        {/* Final CTA */}
-        <section className="py-24 md:py-32 bg-slate-900 text-white">
-          <div className="max-w-3xl mx-auto px-6 text-center">
-            <motion.div {...fadeInUp} className="space-y-8">
-              <h2 className="text-4xl md:text-5xl font-bold">
-                ¿Listo para encontrar tu lugar?
-              </h2>
-              <p className="text-xl text-slate-400">
-                Únete a miles de personas que ya encontraron donde quieren vivir.
-              </p>
-              <Link href="/buscar">
-                <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-100 rounded-full px-10 h-14 text-base font-medium">
-                  Comenzar ahora
-                  <ArrowRight className="h-5 w-5 ml-2" />
-                </Button>
-              </Link>
-            </motion.div>
-          </div>
-        </section>
+        {/* Final CTA - Only show if buscar is enabled */}
+        {isBuscarEnabled && (
+          <section className="py-24 md:py-32 bg-slate-900 text-white">
+            <div className="max-w-3xl mx-auto px-6 text-center">
+              <motion.div {...fadeInUp} className="space-y-8">
+                <h2 className="text-4xl md:text-5xl font-bold">
+                  ¿Listo para encontrar tu lugar?
+                </h2>
+                <p className="text-xl text-slate-400">
+                  Únete a miles de personas que ya encontraron donde quieren vivir.
+                </p>
+                <Link href="/buscar">
+                  <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-100 rounded-full px-10 h-14 text-base font-medium">
+                    Comenzar ahora
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                  </Button>
+                </Link>
+              </motion.div>
+            </div>
+          </section>
+        )}
 
         {/* Newsletter Section */}
         <section className="py-16 border-t border-slate-100">
@@ -660,8 +674,12 @@ export default function LandingPage() {
             <div>
               <h4 className="font-medium text-slate-900 mb-4">Producto</h4>
               <ul className="space-y-2 text-sm text-slate-500">
-                <li><Link href="/buscar" className="hover:text-slate-900">Buscar Casa</Link></li>
-                <li><Link href="/precios" className="hover:text-slate-900">Precios</Link></li>
+                {isBuscarEnabled && (
+                  <li><Link href="/buscar" className="hover:text-slate-900">Buscar Casa</Link></li>
+                )}
+                {isPreciosEnabled && (
+                  <li><Link href="/precios" className="hover:text-slate-900">Precios</Link></li>
+                )}
                 <li><Link href="#" className="hover:text-slate-900">API</Link></li>
               </ul>
             </div>
