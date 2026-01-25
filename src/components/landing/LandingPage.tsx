@@ -257,7 +257,7 @@ export default function LandingPage() {
         </section>
 
         {/* Stats Bar */}
-        <section className="border-y border-slate-100 bg-slate-50/50">
+        <section className="border-y border-slate-800 bg-slate-900">
           <div className="max-w-6xl mx-auto px-6 py-12">
             <motion.div 
               {...fadeInUp}
@@ -265,8 +265,8 @@ export default function LandingPage() {
             >
               {stats.map((stat) => (
                 <div key={stat.label} className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-slate-900">{stat.value}</div>
-                  <div className="text-sm text-slate-500 mt-1">{stat.label}</div>
+                  <div className="text-3xl md:text-4xl font-bold text-white">{stat.value}</div>
+                  <div className="text-sm text-slate-400 mt-1">{stat.label}</div>
                 </div>
               ))}
             </motion.div>
