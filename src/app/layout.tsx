@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { PageConfigProvider } from "@/components/providers/PageConfigProvider";
+import { getPageConfigFromServer } from "@/lib/page-config-server";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,18 +33,23 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Fetch page config on the server - no flash on client
+  const pageConfig = await getPageConfigFromServer();
+
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
-        <AuthProvider>
-          {children}
-          <Toaster />
-        </AuthProvider>
+        <PageConfigProvider initialConfig={pageConfig}>
+          <AuthProvider>
+            {children}
+            <Toaster />
+          </AuthProvider>
+        </PageConfigProvider>
       </body>
     </html>
   );

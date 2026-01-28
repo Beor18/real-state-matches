@@ -4,17 +4,20 @@ import { ReactNode } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/components/auth/AuthProvider'
+import { usePageConfig } from '@/hooks/usePageConfig'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { 
-  Lock, 
-  LogIn, 
   Crown, 
   Sparkles, 
   ArrowRight,
-  CheckCircle,
   Loader2,
+  UserPlus,
+  Zap,
+  Search,
+  Bell,
+  Brain,
 } from 'lucide-react'
 
 interface SubscriptionGateProps {
@@ -49,6 +52,8 @@ export function SubscriptionGate({
   className = '',
 }: SubscriptionGateProps) {
   const { user, subscription, dbUser, isLoading } = useAuth()
+  const { isPageEnabled } = usePageConfig()
+  const isPreciosEnabled = isPageEnabled('page-precios')
 
   // Loading state
   if (isLoading) {
@@ -87,37 +92,58 @@ export function SubscriptionGate({
 
   // Determine which overlay to show
   const needsLogin = !user
-  const needsUpgrade = user && !hasActiveSubscription
   const needsHigherPlan = user && hasActiveSubscription && !hasRequiredPlan()
+
+  // Feature items with icons for better visual appeal
+  const featureItems = [
+    { icon: Search, label: 'Búsquedas ilimitadas' },
+    { icon: Brain, label: 'Matching inteligente con IA' },
+    { icon: Bell, label: 'Alertas personalizadas' },
+  ]
 
   const overlayContent = {
     login: {
-      icon: LogIn,
-      badge: 'Acceso Requerido',
-      badgeColor: 'bg-slate-100 text-slate-700',
-      title: title || 'Inicia sesión para continuar',
-      description: description || 'Necesitas una cuenta para acceder a esta funcionalidad.',
-      primaryButton: { href: '/auth/login', label: 'Iniciar Sesión' },
-      secondaryButton: { href: '/precios', label: 'Ver Planes' },
+      icon: UserPlus,
+      iconBg: 'bg-emerald-100',
+      iconColor: 'text-emerald-600',
+      badge: 'Crea tu cuenta gratis',
+      badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      title: title || 'Únete para comenzar tu búsqueda',
+      description: description || 'Crea una cuenta gratuita en segundos y accede a nuestra búsqueda inteligente de propiedades.',
+      primaryButton: { href: '/auth/login', label: 'Crear cuenta gratis', icon: UserPlus },
+      secondaryText: '¿Ya tienes cuenta?',
+      secondaryLink: { href: '/auth/login', label: 'Inicia sesión' },
+      showFeatures: true,
     },
     upgrade: {
       icon: Sparkles,
-      badge: 'Plan Requerido',
-      badgeColor: 'bg-emerald-100 text-emerald-700',
-      title: title || 'Activa un plan para comenzar',
-      description: description || 'Esta funcionalidad está disponible para usuarios con un plan activo.',
-      primaryButton: { href: '/precios', label: 'Ver Planes' },
-      secondaryButton: null,
-      features: ['Búsquedas ilimitadas', 'Matching con IA', 'Alertas personalizadas'],
+      iconBg: 'bg-amber-100',
+      iconColor: 'text-amber-600',
+      badge: 'Desbloquea esta función',
+      badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      title: title || 'Activa tu plan para continuar',
+      description: description || 'Esta función premium te ayuda a encontrar propiedades que realmente se adaptan a tu estilo de vida.',
+      primaryButton: isPreciosEnabled 
+        ? { href: '/precios', label: 'Ver planes disponibles', icon: Zap }
+        : { href: '/dashboard', label: 'Ir al dashboard', icon: ArrowRight },
+      secondaryText: null,
+      secondaryLink: null,
+      showFeatures: true,
     },
     higherPlan: {
       icon: Crown,
+      iconBg: 'bg-purple-100',
+      iconColor: 'text-purple-600',
       badge: `Requiere Plan ${requiredPlan?.charAt(0).toUpperCase()}${requiredPlan?.slice(1)}`,
-      badgeColor: 'bg-amber-100 text-amber-700',
-      title: title || 'Actualiza tu plan',
-      description: description || `Esta funcionalidad requiere el plan ${requiredPlan} o superior.`,
-      primaryButton: { href: '/precios', label: 'Actualizar Plan' },
-      secondaryButton: null,
+      badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
+      title: title || 'Mejora tu plan actual',
+      description: description || `Para acceder a esta función necesitas el plan ${requiredPlan} o superior. Mejora ahora y desbloquea más beneficios.`,
+      primaryButton: isPreciosEnabled 
+        ? { href: '/precios', label: 'Mejorar mi plan', icon: Crown }
+        : { href: '/dashboard', label: 'Ir al dashboard', icon: ArrowRight },
+      secondaryText: null,
+      secondaryLink: null,
+      showFeatures: false,
     },
   }
 
@@ -128,6 +154,7 @@ export function SubscriptionGate({
       : overlayContent.upgrade
 
   const IconComponent = content.icon
+  const ButtonIcon = content.primaryButton.icon
 
   return (
     <div className={`relative ${className}`}>
@@ -137,7 +164,7 @@ export function SubscriptionGate({
           className="pointer-events-none select-none"
           aria-hidden="true"
         >
-          <div className="opacity-40 blur-[2px] saturate-50">
+          <div className="opacity-30 blur-[3px] saturate-50">
             {children}
           </div>
         </div>
@@ -149,70 +176,81 @@ export function SubscriptionGate({
         style={showPreview ? { minHeight: '400px' } : {}}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
           className="w-full max-w-md"
         >
-          <Card className="border-2 border-slate-200 shadow-xl bg-white/95 backdrop-blur-sm">
-            <CardContent className="p-8 text-center space-y-6">
-              {/* Icon */}
-              <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-slate-100 mx-auto">
-                <IconComponent className="h-8 w-8 text-slate-700" />
+          <Card className="border border-slate-200 shadow-2xl bg-white overflow-hidden">
+            {/* Decorative top gradient */}
+            <div className="h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
+            
+            <CardContent className="p-8 space-y-6">
+              {/* Icon and Badge */}
+              <div className="flex flex-col items-center gap-4">
+                <motion.div 
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+                  className={`inline-flex items-center justify-center h-16 w-16 rounded-2xl ${content.iconBg}`}
+                >
+                  <IconComponent className={`h-8 w-8 ${content.iconColor}`} />
+                </motion.div>
+
+                <Badge variant="outline" className={`${content.badgeColor} font-medium px-3 py-1`}>
+                  {content.badge}
+                </Badge>
               </div>
 
-              {/* Badge */}
-              <Badge className={`${content.badgeColor} border-0`}>
-                <Lock className="h-3 w-3 mr-1" />
-                {content.badge}
-              </Badge>
-
               {/* Title & Description */}
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-slate-900">
+              <div className="text-center space-y-3">
+                <h3 className="text-2xl font-bold text-slate-900 tracking-tight">
                   {content.title}
                 </h3>
-                <p className="text-slate-600 text-sm leading-relaxed">
+                <p className="text-slate-500 text-sm leading-relaxed max-w-sm mx-auto">
                   {content.description}
                 </p>
               </div>
 
-              {/* Features list for upgrade prompt */}
-              {'features' in content && content.features && (
-                <ul className="space-y-2 text-left">
-                  {content.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm text-slate-600">
-                      <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+              {/* Features list */}
+              {content.showFeatures && (
+                <div className="bg-slate-50 rounded-xl p-4 space-y-3">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider text-center">
+                    Incluye
+                  </p>
+                  <ul className="space-y-2.5">
+                    {featureItems.map((feature) => {
+                      const FeatureIcon = feature.icon
+                      return (
+                        <li key={feature.label} className="flex items-center gap-3 text-sm text-slate-700">
+                          <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-emerald-100">
+                            <FeatureIcon className="h-4 w-4 text-emerald-600" />
+                          </div>
+                          {feature.label}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
               )}
 
-              {/* Buttons */}
-              <div className="flex flex-col gap-3 pt-2">
-                <Link href={content.primaryButton.href} className="w-full">
-                  <Button className="w-full bg-slate-900 hover:bg-slate-800 h-11">
-                    {content.primaryButton.label}
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </Link>
-                
-                {content.secondaryButton && (
-                  <Link href={content.secondaryButton.href} className="w-full">
-                    <Button variant="outline" className="w-full h-11">
-                      {content.secondaryButton.label}
-                    </Button>
-                  </Link>
-                )}
-              </div>
+              {/* Primary Button */}
+              <Link href={content.primaryButton.href} className="block">
+                <Button className="w-full bg-slate-900 hover:bg-slate-800 h-12 text-base font-medium gap-2 rounded-xl transition-all hover:shadow-lg">
+                  <ButtonIcon className="h-5 w-5" />
+                  {content.primaryButton.label}
+                </Button>
+              </Link>
 
-              {/* Help text */}
-              {needsLogin && (
-                <p className="text-xs text-slate-500">
-                  ¿No tienes cuenta?{' '}
-                  <Link href="/auth/login" className="text-emerald-600 hover:underline">
-                    Regístrate gratis
+              {/* Secondary link */}
+              {content.secondaryText && content.secondaryLink && (
+                <p className="text-center text-sm text-slate-500">
+                  {content.secondaryText}{' '}
+                  <Link 
+                    href={content.secondaryLink.href} 
+                    className="text-emerald-600 font-medium hover:text-emerald-700 hover:underline"
+                  >
+                    {content.secondaryLink.label}
                   </Link>
                 </p>
               )}

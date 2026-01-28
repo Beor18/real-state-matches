@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -54,6 +54,9 @@ export default function DashboardPage() {
   const [savedProperties, setSavedProperties] = useState<SavedProperty[]>([])
   const [loadingSaved, setLoadingSaved] = useState(true)
   const [removingId, setRemovingId] = useState<string | null>(null)
+  
+  // Use ref to track if initial load is done - persists across re-renders without causing them
+  const initialLoadDoneRef = useRef(false)
 
   // Check if pages are enabled
   const isPreciosEnabled = isPageEnabled('page-precios')
@@ -66,9 +69,10 @@ export default function DashboardPage() {
     }
   }, [isLoading, user, router])
 
-  // Fetch saved properties
+  // Fetch saved properties - only on initial mount
   useEffect(() => {
-    if (user) {
+    if (user && !initialLoadDoneRef.current) {
+      initialLoadDoneRef.current = true
       fetchSavedProperties()
     }
   }, [user])

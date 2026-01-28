@@ -317,8 +317,6 @@ export default function BuscarPage() {
                 <div className="max-w-2xl mx-auto px-6">
                   {/* Subscription Gate - wraps form for access control */}
                   <SubscriptionGate
-                    title="Activa un plan para buscar propiedades"
-                    description="La búsqueda inteligente está disponible para usuarios con un plan activo. Los administradores tienen acceso automático."
                     showPreview={true}
                   >
               <Card className="border-0 shadow-lg bg-white">
