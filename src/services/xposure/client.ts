@@ -54,6 +54,8 @@ interface DatabaseProperty {
   id: string
   mls_id: string
   idx_source: string
+  title: string | null
+  description: string | null
   address: string
   city: string
   state: string
@@ -120,6 +122,20 @@ function normalizeText(text: string): string {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
     .trim()
+}
+
+// Translate property type to Spanish for display
+function propertyTypeToSpanish(type: string): string {
+  const translations: Record<string, string> = {
+    'residential': 'Residencial',
+    'apartment': 'Apartamento',
+    'house': 'Casa',
+    'condo': 'Condominio',
+    'land': 'Terreno',
+    'commercial': 'Comercial',
+    'townhouse': 'Townhouse',
+  }
+  return translations[type?.toLowerCase()] || 'Propiedad'
 }
 
 class XposureClient {
@@ -365,7 +381,7 @@ class XposureClient {
       sourceProvider: 'xposure' as const,
       externalId: dbProperty.mls_id,
       mlsNumber: dbProperty.mls_id,
-      title: `${dbProperty.property_type} en ${listingTypeText} - ${dbProperty.city}`,
+      title: dbProperty.title || `${propertyTypeToSpanish(dbProperty.property_type)} en ${listingTypeText} - ${dbProperty.city}`,
       description: `Propiedad en ${dbProperty.neighborhood || dbProperty.city}, ${dbProperty.state}. ${dbProperty.bedrooms} habitaciones, ${dbProperty.bathrooms} baños.`,
       price: dbProperty.price,
       address: {
@@ -468,7 +484,7 @@ class XposureClient {
       sourceProvider: 'xposure' as const,
       externalId: xposureProperty.id,
       mlsNumber: xposureProperty.publicKey || xposureProperty.uid,
-      title: `${propertyType.charAt(0).toUpperCase() + propertyType.slice(1)} en ${city}`,
+      title: `${propertyTypeToSpanish(propertyType)} en ${city}`,
       description: `Propiedad en ${neighborhood || city}, Puerto Rico. ${xposureProperty.subdivision ? `Urbanización: ${decodeHtml(xposureProperty.subdivision)}` : ''}`,
       price,
       address: {
@@ -506,4 +522,4 @@ export function createXposureClient(): XposureClient {
 }
 
 export { XposureClient }
-export type { XposureProperty, DatabaseProperty }
+export type { DatabaseProperty }
