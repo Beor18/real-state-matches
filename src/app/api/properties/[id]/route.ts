@@ -56,12 +56,10 @@ export async function GET(
           id: `${property.idx_source}-${property.mls_id}`,
           sourceProvider: property.idx_source,
           mlsNumber: property.mls_id,
-          title: property.property_type 
-            ? `${property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1)} en ${property.listing_type === 'rent' ? 'Alquiler' : 'Venta'} - ${property.city}`
-            : `Propiedad en ${property.city}`,
-          description: property.neighborhood 
+          title: property.title || `Propiedad en ${property.city}`,
+          description: property.description || (property.neighborhood 
             ? `Propiedad ubicada en ${property.neighborhood}, ${property.city}, Puerto Rico.`
-            : `Propiedad ubicada en ${property.city}, Puerto Rico.`,
+            : `Propiedad ubicada en ${property.city}, Puerto Rico.`),
           price: property.price,
           listingType: property.listing_type,
           address: {

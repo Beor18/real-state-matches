@@ -134,6 +134,20 @@ function propertyTypeFromIcon(icon: string): string {
   return 'residential'
 }
 
+// Translate property type to Spanish for display
+function propertyTypeToSpanish(type: string): string {
+  const translations: Record<string, string> = {
+    'residential': 'Residencial',
+    'apartment': 'Apartamento',
+    'house': 'Casa',
+    'condo': 'Condominio',
+    'land': 'Terreno',
+    'commercial': 'Comercial',
+    'townhouse': 'Townhouse',
+  }
+  return translations[type] || 'Propiedad'
+}
+
 // Map Xposure status to database status
 function mapStatus(status: string): string {
   const statusMap: Record<string, string> = {
@@ -166,9 +180,9 @@ function transformToDatabase(xposure: XposureProperty, index: number): DatabaseP
   const listingTypeText = isRent ? 'Alquiler' : 'Venta'
   const addressStr = xposure.address?.trim() || `${xposure.stName || ''} ${xposure.stNum || ''}`.trim()
 
-  // Build title
-  const propertyTypeFormatted = propertyType.charAt(0).toUpperCase() + propertyType.slice(1)
-  const title = `${propertyTypeFormatted} en ${listingTypeText} - ${city}`
+  // Build title (in Spanish)
+  const propertyTypeSpanish = propertyTypeToSpanish(propertyType)
+  const title = `${propertyTypeSpanish} en ${listingTypeText} - ${city}`
 
   // Build description
   const descriptionParts: string[] = []
