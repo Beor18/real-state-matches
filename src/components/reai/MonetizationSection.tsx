@@ -297,7 +297,7 @@ export default function MonetizationSection() {
                   </div>
                   {billingInterval === 'yearly' && (
                     <p className="text-xs text-emerald-600 font-medium">
-                      Facturado anualmente (${(plan.yearlyPrice * 12).toLocaleString()})
+                      Facturado anualmente (${(plan.yearlyPrice * 12).toLocaleString('en-US')})
                     </p>
                   )}
                 </div>

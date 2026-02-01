@@ -13,6 +13,7 @@ import {
 import { createShowcaseIDXClient, MOCK_IDX_PROPERTIES, ShowcaseIDXClient } from '@/services/showcase-idx/client'
 import { createZillowBridgeClient, ZillowBridgeClient } from '@/services/zillow-bridge/client'
 import { createRealtorRapidAPIClient } from '@/services/realtor-rapidapi/client'
+import { createXposureClient } from '@/services/xposure/client'
 
 // Database type for provider settings
 interface ProviderSettings {
@@ -123,6 +124,11 @@ export async function getAllProviderSettings(): Promise<ProviderSettings[]> {
 
 // Create a provider client from settings
 function createProviderClient(settings: ProviderSettings): PropertyProviderClient | null {
+  // Xposure uses local data, no API key needed
+  if (settings.provider_key === 'xposure') {
+    return createXposureClient()
+  }
+  
   if (!settings.api_key) {
     console.warn(`Provider ${settings.provider_key} has no API key configured`)
     return null
@@ -155,6 +161,10 @@ function createProviderClient(settings: ProviderSettings): PropertyProviderClien
       return createRealtorRapidAPIClient({
         rapidApiKey: rapidApiKey,
       })
+    
+    case 'xposure':
+      // Xposure uses local Supabase data, no API key needed
+      return createXposureClient()
     
     default:
       console.warn(`Unknown provider: ${settings.provider_key}`)
@@ -315,6 +325,11 @@ export async function testProviderConnection(
       })
       break
     
+    case 'xposure':
+      // Xposure uses local data, no API key needed
+      client = createXposureClient()
+      break
+    
     default:
       return {
         success: false,
@@ -342,7 +357,8 @@ export function getMockProperties(): NormalizedProperty[] {
 // Check if any providers are configured
 export async function hasActiveProviders(): Promise<boolean> {
   const settings = await getProviderSettings()
-  return settings.some(s => s.enabled && s.api_key)
+  // Xposure doesn't need API key, other providers do
+  return settings.some(s => s.enabled && (s.provider_key === 'xposure' || s.api_key))
 }
 
 // Get provider status summary for admin dashboard
@@ -368,7 +384,8 @@ export async function getProviderStatusSummary(): Promise<{
       key: providerKey,
       name: providerConfig.name,
       enabled: setting?.enabled ?? false,
-      configured: !!(setting?.api_key),
+      // Xposure doesn't need API key (uses local data), other providers do
+      configured: providerKey === 'xposure' ? true : !!(setting?.api_key),
       lastSync: undefined, // Could be populated from setting.last_sync_at
     }
   })

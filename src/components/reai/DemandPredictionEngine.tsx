@@ -311,7 +311,7 @@ export default function DemandPredictionEngine() {
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">Precio Promedio</p>
                         <p className="text-lg font-semibold">
-                          ${zone.avgPrice.toLocaleString()}
+                          ${zone.avgPrice.toLocaleString('en-US')}
                         </p>
                       </div>
                       <div className="space-y-1">
@@ -413,12 +413,12 @@ export default function DemandPredictionEngine() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Precio Actual</span>
-                        <span className="font-bold text-lg">${property.price.toLocaleString()}</span>
+                        <span className="font-bold text-lg">${property.price.toLocaleString('en-US')}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Predicción 3A</span>
                         <span className="font-bold text-lg text-emerald-600">
-                          +${(property.predictedValue3Y - property.price).toLocaleString()}
+                          +${(property.predictedValue3Y - property.price).toLocaleString('en-US')}
                         </span>
                       </div>
                     </div>

@@ -322,7 +322,7 @@ export default function DashboardPage() {
                             <div className="flex items-center gap-4 mt-2 text-xs text-slate-600">
                               <span className="flex items-center gap-1">
                                 <DollarSign className="h-3 w-3 text-emerald-600" />
-                                ${property.price.toLocaleString()}
+                                ${property.price.toLocaleString('en-US')}
                               </span>
                               <span className="flex items-center gap-1">
                                 <Bed className="h-3 w-3" />
@@ -334,7 +334,7 @@ export default function DashboardPage() {
                               </span>
                               <span className="flex items-center gap-1">
                                 <Maximize className="h-3 w-3" />
-                                {property.squareFeet?.toLocaleString()} ft²
+                                {property.squareFeet?.toLocaleString('en-US')} ft²
                               </span>
                             </div>
                             

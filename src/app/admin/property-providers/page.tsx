@@ -511,7 +511,7 @@ export default function PropertyProvidersPage() {
                     <Button
                       variant="outline"
                       onClick={() => handleTestConnection(provider.key)}
-                      disabled={testingProvider === provider.key || !formState.apiKey}
+                      disabled={testingProvider === provider.key || (!formState?.apiKey && providerConfig?.fields?.length > 0)}
                     >
                       {testingProvider === provider.key ? (
                         <>
@@ -528,7 +528,7 @@ export default function PropertyProvidersPage() {
                     
                     <Button
                       onClick={() => handleSaveCredentials(provider.key)}
-                      disabled={savingProvider === provider.key || !formState.apiKey}
+                      disabled={savingProvider === provider.key || (!formState?.apiKey && providerConfig?.fields?.length > 0)}
                     >
                       {savingProvider === provider.key ? (
                         <>

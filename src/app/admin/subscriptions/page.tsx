@@ -308,7 +308,7 @@ export default function SubscriptionsPage() {
             </div>
             <div>
               <p className="text-sm text-gray-500">MRR Estimado</p>
-              <p className="text-2xl font-bold text-gray-900">${stats.mrrEstimate.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-gray-900">${stats.mrrEstimate.toLocaleString('en-US')}</p>
             </div>
           </div>
         </motion.div>

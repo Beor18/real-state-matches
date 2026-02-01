@@ -44,6 +44,7 @@ export interface SuggestedLocation {
   state?: string
   country?: string
   postalCode?: string
+  region?: 'puerto_rico' | 'us_mainland' | 'other'
 }
 
 // Lifestyle Profile Analysis Service
@@ -53,7 +54,8 @@ export async function analyzeLifestyleProfile(
   keywords: string[]
   summary: string
   lifestyleType: string
-  suggestedLocation?: SuggestedLocation
+  suggestedLocation?: SuggestedLocation  // Deprecated: use suggestedLocations instead
+  suggestedLocations: SuggestedLocation[]  // Array of all detected locations
   embedding?: number[]
 }> {
   const prompt = `
@@ -61,7 +63,7 @@ Analiza este perfil de estilo de vida para búsqueda de propiedades:
 
 Descripción de vida ideal: "${profile.idealLifeDescription}"
 Prioridades: ${profile.priorities}
-Presupuesto: ${profile.budget ? `$${profile.budget.toLocaleString()}` : 'No especificado'}
+Presupuesto: ${profile.budget ? `$${profile.budget.toLocaleString('en-US')}` : 'No especificado'}
 Ubicación preferida por el usuario: ${profile.location || 'No especificada'}
 Tipos de propiedad: ${profile.preferredPropertyTypes?.join(', ') || 'No especificados'}
 
@@ -69,28 +71,39 @@ Por favor:
 1. Extrae las palabras clave más importantes (5-10)
 2. Resume las preferencias principales (2-3 frases)
 3. Identifica el tipo de estilo de vida (urbano, costero, familiar, rural, profesional, etc.)
-4. IMPORTANTE: Extrae cualquier ubicación mencionada en la descripción de vida ideal.
+4. IMPORTANTE: Extrae TODAS las ubicaciones mencionadas en la descripción de vida ideal.
    - Busca nombres de ciudades, estados, países, o regiones
-   - Ejemplos: "Miami", "Texas", "Nueva York", "California", "Puerto Rico", "Florida"
-   - Si no hay ubicación mencionada, devuelve null para suggestedLocation
+   - El usuario puede mencionar MÚLTIPLES ubicaciones (ej: "Austin, Texas y también Puerto Rico")
+   - Devuelve un array con TODAS las ubicaciones detectadas
 
 Responde en formato JSON:
 {
   "keywords": ["palabra1", "palabra2", ...],
   "summary": "resumen breve",
   "lifestyleType": "tipo de estilo de vida",
-  "suggestedLocation": {
-    "city": "nombre de ciudad o null",
-    "state": "código de estado de 2 letras (ej: TX, FL, CA, NY) o nombre completo",
-    "country": "US o código de país"
-  }
+  "suggestedLocations": [
+    {
+      "city": "nombre de ciudad o null",
+      "state": "código de estado de 2 letras (ej: TX, FL, CA, NY, PR)",
+      "country": "US o PR",
+      "region": "puerto_rico" o "us_mainland" o "other"
+    }
+  ]
 }
 
-NOTAS sobre suggestedLocation:
-- Si el usuario menciona un estado como "Texas" o "Florida", ponlo en "state" con código de 2 letras (TX, FL)
-- Si menciona una ciudad como "Miami" o "Austin", ponlo en "city" y el estado correspondiente en "state"
-- Si no hay ubicación clara, devuelve null para suggestedLocation
-- Prioriza la ubicación que el usuario menciona en su descripción de vida ideal
+NOTAS MUY IMPORTANTES sobre suggestedLocations:
+- Devuelve un ARRAY con TODAS las ubicaciones mencionadas
+- Si el usuario menciona "Austin, Texas y Aguadilla, Puerto Rico", devuelve DOS objetos en el array
+- Para Puerto Rico: state="PR", country="PR", region="puerto_rico"
+- Para ciudades de USA continental: region="us_mainland"
+- Ciudades de Puerto Rico comunes: San Juan, Aguadilla, Rincón, Dorado, Guaynabo, Mayagüez, Ponce, Carolina, Bayamón, Caguas
+- Si no hay ubicación clara, devuelve un array vacío []
+- Incluye TODAS las ubicaciones, no solo la primera
+
+Ejemplos:
+- "Quiero vivir cerca del mar en Puerto Rico" -> [{"state": "PR", "country": "PR", "region": "puerto_rico"}]
+- "Austin Texas o Miami Florida" -> [{"city": "Austin", "state": "TX", "region": "us_mainland"}, {"city": "Miami", "state": "FL", "region": "us_mainland"}]
+- "Aguadilla PR y también Nueva York" -> [{"city": "Aguadilla", "state": "PR", "region": "puerto_rico"}, {"city": "New York", "state": "NY", "region": "us_mainland"}]
 `
 
   try {
@@ -108,26 +121,48 @@ NOTAS sobre suggestedLocation:
     const embeddingText = `${profile.idealLifeDescription} ${profile.priorities} ${parsed.keywords.join(' ')}`
     const embedding = await createEmbedding(embeddingText)
 
-    // Parse suggested location
-    let suggestedLocation: SuggestedLocation | undefined
-    if (parsed.suggestedLocation && typeof parsed.suggestedLocation === 'object') {
+    // Parse suggested locations (array)
+    const suggestedLocations: SuggestedLocation[] = []
+    
+    // Handle new array format
+    if (Array.isArray(parsed.suggestedLocations)) {
+      for (const loc of parsed.suggestedLocations) {
+        if (loc && typeof loc === 'object' && (loc.city || loc.state || loc.country)) {
+          suggestedLocations.push({
+            city: loc.city || undefined,
+            state: loc.state || undefined,
+            country: loc.country || 'US',
+            postalCode: loc.postalCode || undefined,
+            region: loc.region || (loc.state === 'PR' ? 'puerto_rico' : 'us_mainland'),
+          })
+        }
+      }
+    }
+    // Backward compatibility: handle old singular format
+    else if (parsed.suggestedLocation && typeof parsed.suggestedLocation === 'object') {
       const loc = parsed.suggestedLocation
-      // Only include if at least one field is present
       if (loc.city || loc.state || loc.country || loc.postalCode) {
-        suggestedLocation = {
+        suggestedLocations.push({
           city: loc.city || undefined,
           state: loc.state || undefined,
           country: loc.country || 'US',
           postalCode: loc.postalCode || undefined,
-        }
+          region: loc.state === 'PR' ? 'puerto_rico' : 'us_mainland',
+        })
       }
     }
+
+    // First location for backward compatibility
+    const suggestedLocation = suggestedLocations.length > 0 ? suggestedLocations[0] : undefined
+
+    console.log(`AI extracted ${suggestedLocations.length} locations:`, suggestedLocations)
 
     return {
       keywords: parsed.keywords || [],
       summary: parsed.summary || profile.idealLifeDescription.slice(0, 200),
       lifestyleType: parsed.lifestyleType || 'general',
-      suggestedLocation,
+      suggestedLocation,  // Backward compatibility
+      suggestedLocations,  // New array format
       embedding
     }
   } catch (error) {
@@ -154,7 +189,7 @@ Analiza la compatibilidad entre este perfil de usuario y las siguientes propieda
 PERFIL DEL USUARIO:
 - Vida ideal: "${profile.idealLifeDescription}"
 - Prioridades: ${profile.priorities}
-- Presupuesto: ${profile.budget ? `$${profile.budget.toLocaleString()}` : 'Flexible'}
+- Presupuesto: ${profile.budget ? `$${profile.budget.toLocaleString('en-US')}` : 'Flexible'}
 - Ubicación: ${profile.location || 'Cualquiera'}
 
 PROPIEDADES DISPONIBLES:
@@ -162,7 +197,7 @@ ${properties.map((p, i) => `
 ${i + 1}. ID: ${p.id}
    - Título: ${p.title}
    - Ubicación: ${p.address}, ${p.city}
-   - Precio: $${p.price.toLocaleString()}
+   - Precio: $${p.price.toLocaleString('en-US')}
    - Habitaciones: ${p.bedrooms || 'N/A'}, Baños: ${p.bathrooms || 'N/A'}
    - Amenidades: ${p.amenities.slice(0, 5).join(', ')}
    - Descripción: ${p.description.slice(0, 200)}...
@@ -392,7 +427,7 @@ Analiza y proyecta el valor de esta propiedad:
 PROPIEDAD:
 - Título: ${property.title}
 - Ubicación: ${property.address}, ${property.city}
-- Valor actual: $${currentValue.toLocaleString()}
+- Valor actual: $${currentValue.toLocaleString('en-US')}
 - Tipo: ${property.bedrooms} hab, ${property.bathrooms} baños, ${property.squareFeet || 'N/A'} sqft
 - Amenidades: ${property.amenities.join(', ')}
 - Descripción: ${property.description.slice(0, 300)}

@@ -1,9 +1,9 @@
 // Property Data Providers Configuration
 // Defines all supported property data providers for real estate listings
 
-import { Home, Building, MapPin, Globe } from 'lucide-react'
+import { Home, Building, MapPin, Globe, Building2 } from 'lucide-react'
 
-export type PropertyProvider = 'showcase_idx' | 'zillow_bridge' | 'realtor_rapidapi'
+export type PropertyProvider = 'showcase_idx' | 'zillow_bridge' | 'realtor_rapidapi' | 'xposure'
 
 export interface PropertyProviderField {
   key: string
@@ -200,6 +200,25 @@ export const PROPERTY_PROVIDERS: Record<PropertyProvider, PropertyProviderConfig
         description: 'Tu API Key de RapidAPI para acceder a Realtor Data',
       },
     ],
+  },
+  xposure: {
+    id: 'xposure',
+    name: 'Xposure MLS Puerto Rico',
+    description: 'MLS de Puerto Rico con datos actualizados de propiedades en venta y alquiler. Datos sincronizados localmente desde xposureapp.com.',
+    website: 'https://puertorico.xposureapp.com',
+    docsUrl: 'https://puertorico.xposureapp.com',
+    icon: Building2,
+    baseUrl: 'internal', // Datos locales en Supabase
+    supportedRegions: ['PR'],
+    features: [
+      'Propiedades en venta y alquiler',
+      'MLS Puerto Rico oficial',
+      'Datos sincronizados automáticamente',
+      'Fotos de propiedades',
+      'Información de ubicación con coordenadas',
+      'Prioridad en resultados de búsqueda',
+    ],
+    fields: [], // Sin API key, datos locales
   },
 }
 

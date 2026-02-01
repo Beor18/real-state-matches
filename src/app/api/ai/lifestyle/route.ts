@@ -64,49 +64,116 @@ export async function POST(request: NextRequest) {
       preferredPropertyTypes,
     })
 
-    // Determine search location with fallback priority:
-    // 1. User-provided location from form
-    // 2. AI-extracted location from lifestyle description
-    // 3. Default fallback location (New York for broad coverage)
-    const DEFAULT_LOCATION = { city: 'New York', state: 'NY' }
-    
-    let searchCity: string | undefined
-    let searchState: string | undefined
-    let searchZipCode: string | undefined
-    let locationSource = 'default'
-
-    if (location && location.trim()) {
-      // User provided explicit location
-      searchCity = location.trim()
-      locationSource = 'user'
-    } else if (profileAnalysis.suggestedLocation) {
-      // AI extracted location from description
-      const suggested = profileAnalysis.suggestedLocation
-      searchCity = suggested.city
-      searchState = suggested.state
-      searchZipCode = suggested.postalCode
-      locationSource = 'ai_extracted'
-      console.log('Using AI-extracted location:', suggested)
-    } else {
-      // Fallback to default location
-      searchCity = DEFAULT_LOCATION.city
-      searchState = DEFAULT_LOCATION.state
-      locationSource = 'default'
-      console.log('No location found, using default:', DEFAULT_LOCATION)
+    // Build list of all locations to search
+    // Sources: AI-extracted locations + user-provided location
+    interface SearchLocation {
+      city?: string
+      state?: string
+      zipCode?: string
+      source: string
     }
+    
+    const searchLocations: SearchLocation[] = []
+    
+    // Add AI-extracted locations (can be multiple)
+    if (profileAnalysis.suggestedLocations && profileAnalysis.suggestedLocations.length > 0) {
+      for (const loc of profileAnalysis.suggestedLocations) {
+        searchLocations.push({
+          city: loc.city,
+          state: loc.state,
+          zipCode: loc.postalCode,
+          source: 'ai_extracted',
+        })
+      }
+      console.log(`AI extracted ${profileAnalysis.suggestedLocations.length} locations:`, profileAnalysis.suggestedLocations)
+    }
+    
+    // Add user-provided location if not already covered
+    if (location && location.trim()) {
+      const userLoc = location.trim().toLowerCase()
+      const alreadyIncluded = searchLocations.some(
+        loc => loc.city?.toLowerCase() === userLoc || loc.state?.toLowerCase() === userLoc
+      )
+      if (!alreadyIncluded) {
+        searchLocations.push({
+          city: location.trim(),
+          source: 'user',
+        })
+      }
+    }
+    
+    // If no locations found, use default
+    if (searchLocations.length === 0) {
+      searchLocations.push({
+        city: 'New York',
+        state: 'NY',
+        source: 'default',
+      })
+      console.log('No locations found, using default: New York, NY')
+    }
+    
+    console.log(`Searching in ${searchLocations.length} location(s):`, searchLocations)
 
-    console.log('Search location resolved:', { searchCity, searchState, searchZipCode, locationSource })
+    // Search properties for each location in parallel
+    // Budget is a MAXIMUM, so we search from 0 to budget (not a central range)
+    const locationResults = await Promise.all(
+      searchLocations.map(async (loc) => {
+        console.log(`Searching properties in: ${loc.city || ''} ${loc.state || ''} (source: ${loc.source}), budget max: $${budget}`)
+        return searchPropertiesFromProviders({
+          city: loc.city,
+          state: loc.state,
+          zipCode: loc.zipCode,
+          minPrice: undefined, // No minimum - search all prices up to budget
+          maxPrice: budget || undefined, // Budget is the maximum
+          propertyType: preferredPropertyTypes?.[0],
+          status: 'active',
+        })
+      })
+    )
+    
+    // Combine results from all locations
+    const combinedProperties: typeof locationResults[0]['properties'] = []
+    const combinedTotalByProvider: Record<string, number> = {}
+    const combinedErrors: Record<string, string> = {}
+    const combinedProvidersQueried = new Set<string>()
+    let searchSettings = locationResults[0]?.searchSettings
+    
+    for (const result of locationResults) {
+      // Add properties (avoid duplicates by ID)
+      for (const prop of result.properties) {
+        if (!combinedProperties.find(p => p.id === prop.id)) {
+          combinedProperties.push(prop)
+        }
+      }
+      
+      // Merge totals
+      for (const [provider, total] of Object.entries(result.totalByProvider)) {
+        combinedTotalByProvider[provider] = (combinedTotalByProvider[provider] || 0) + total
+      }
+      
+      // Merge errors
+      Object.assign(combinedErrors, result.errors)
+      
+      // Merge providers queried
+      result.providersQueried.forEach(p => combinedProvidersQueried.add(p))
+      
+      // Use first search settings
+      if (!searchSettings) searchSettings = result.searchSettings
+    }
+    
+    console.log(`Combined ${combinedProperties.length} properties from ${searchLocations.length} location searches`)
+    console.log(`Providers queried: ${Array.from(combinedProvidersQueried).join(', ')}`)
+    console.log(`Properties by provider:`, combinedTotalByProvider)
 
-    // Get properties from active providers (limit is calculated dynamically based on search_settings)
-    const propertyResult = await searchPropertiesFromProviders({
-      city: searchCity,
-      state: searchState,
-      zipCode: searchZipCode,
-      minPrice: budget ? budget * 0.7 : undefined,
-      maxPrice: budget ? budget * 1.3 : undefined,
-      propertyType: preferredPropertyTypes?.[0],
-      status: 'active',
-    })
+    // Create combined property result
+    const propertyResult = {
+      success: combinedProperties.length > 0 || Object.keys(combinedErrors).length === 0,
+      properties: combinedProperties,
+      totalByProvider: combinedTotalByProvider,
+      errors: combinedErrors,
+      providersQueried: Array.from(combinedProvidersQueried) as any[],
+      searchSettings: searchSettings!,
+    }
 
     let matches: any[] = []
     let providerInfo = {
@@ -141,7 +208,7 @@ export async function POST(request: NextRequest) {
       )
 
       // Combine match scores with property data
-      matches = matchResult.matches.map(match => {
+      const allMatches = matchResult.matches.map(match => {
         const property = propertyResult.properties.find((p) => p.id === match.propertyId)
         if (!property) return null
         
@@ -174,16 +241,51 @@ export async function POST(request: NextRequest) {
           matchReasons: match.matchReasons,
           lifestyleFit: match.lifestyleFit,
         }
-      }).filter(Boolean).sort((a, b) => (b?.matchScore || 0) - (a?.matchScore || 0))
+      }).filter(Boolean)
+      
+      // Prioritize Xposure (Puerto Rico MLS) properties
+      // Separate Xposure properties and sort each group by match score
+      const xposureMatches = allMatches
+        .filter(m => m?.sourceProvider === 'xposure')
+        .sort((a, b) => (b?.matchScore || 0) - (a?.matchScore || 0))
+      
+      const otherMatches = allMatches
+        .filter(m => m?.sourceProvider !== 'xposure')
+        .sort((a, b) => (b?.matchScore || 0) - (a?.matchScore || 0))
+      
+      // Ensure at least 5 Xposure properties are prioritized at the top
+      // Then add other properties sorted by match score
+      const prioritizedXposure = xposureMatches.slice(0, 5)
+      const remainingXposure = xposureMatches.slice(5)
+      
+      // Combine: prioritized Xposure first, then others sorted by score
+      const remainingCombined = [...remainingXposure, ...otherMatches]
+        .sort((a, b) => (b?.matchScore || 0) - (a?.matchScore || 0))
+      
+      matches = [...prioritizedXposure, ...remainingCombined]
+      
+      console.log(`Prioritized ${prioritizedXposure.length} Xposure properties, ${remainingCombined.length} other properties`)
     }
 
-    // Build the effective location for saving
-    const effectiveLocation = searchCity || location || ''
+    // Build the effective locations for saving
     const preferredCities: string[] = []
-    if (effectiveLocation) preferredCities.push(effectiveLocation)
-    if (profileAnalysis.suggestedLocation?.city && !preferredCities.includes(profileAnalysis.suggestedLocation.city)) {
-      preferredCities.push(profileAnalysis.suggestedLocation.city)
+    
+    // Add all searched locations
+    for (const loc of searchLocations) {
+      if (loc.city && !preferredCities.includes(loc.city)) {
+        preferredCities.push(loc.city)
+      }
     }
+    
+    // Add AI-suggested cities
+    for (const loc of profileAnalysis.suggestedLocations || []) {
+      if (loc.city && !preferredCities.includes(loc.city)) {
+        preferredCities.push(loc.city)
+      }
+    }
+    
+    const effectiveLocation = preferredCities.join(', ') || location || ''
+    const locationSource = searchLocations.length > 1 ? 'multi_location' : searchLocations[0]?.source || 'default'
 
     // If user is authenticated, save their lifestyle profile
     if (user && profileAnalysis) {
@@ -216,16 +318,19 @@ export async function POST(request: NextRequest) {
         keywords: profileAnalysis.keywords,
         summary: profileAnalysis.summary,
         lifestyleType: profileAnalysis.lifestyleType,
-        suggestedLocation: profileAnalysis.suggestedLocation,
+        suggestedLocation: profileAnalysis.suggestedLocation, // Backward compatibility
+        suggestedLocations: profileAnalysis.suggestedLocations, // All detected locations
         priorities,
         budget,
-        location: effectiveLocation, // The actual location used for search
-        locationSource, // Where the location came from
+        location: effectiveLocation, // The actual locations used for search
+        locationSource, // 'user', 'ai_extracted', 'multi_location', or 'default'
+        searchedLocations: searchLocations.length, // Number of locations searched
         preferredPropertyTypes,
       },
       providers: providerInfo,
       meta: {
         total: matches.length,
+        locationsSearched: searchLocations.length,
         analyzedAt: new Date().toISOString(),
       },
     })

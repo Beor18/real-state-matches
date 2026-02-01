@@ -495,7 +495,7 @@ export default function LifestyleMatch() {
                         </div>
                         <div className="space-y-1">
                           <Maximize className="h-4 w-4 mx-auto text-purple-600" />
-                          <p className="text-xs font-medium">{match.squareFeet.toLocaleString()} ft²</p>
+                          <p className="text-xs font-medium">{match.squareFeet.toLocaleString('en-US')} ft²</p>
                         </div>
                         <div className="space-y-1">
                           <DollarSign className="h-4 w-4 mx-auto text-purple-600" />

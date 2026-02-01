@@ -325,7 +325,7 @@ export default function EquityForecast() {
                       <XAxis dataKey="year" className="text-sm" />
                       <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} className="text-sm" />
                       <Tooltip
-                        formatter={(value: number) => `$${value.toLocaleString()}`}
+                        formatter={(value: number) => `$${value.toLocaleString('en-US')}`}
                         labelStyle={{ color: '#000' }}
                       />
                       <Legend />
@@ -356,21 +356,21 @@ export default function EquityForecast() {
                 <div className="grid md:grid-cols-4 gap-4">
                   <div className="space-y-2 p-4 rounded-lg bg-background border-2">
                     <p className="text-sm text-muted-foreground">Valor Actual</p>
-                    <p className="text-3xl font-bold">${currentProperty.currentValue.toLocaleString()}</p>
+                    <p className="text-3xl font-bold">${currentProperty.currentValue.toLocaleString('en-US')}</p>
                   </div>
                   <div className="space-y-2 p-4 rounded-lg bg-background border-2">
                     <p className="text-sm text-muted-foreground">Predicción 1A</p>
-                    <p className="text-3xl font-bold text-emerald-600">${currentProperty.predictedValue1Y.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-emerald-600">${currentProperty.predictedValue1Y.toLocaleString('en-US')}</p>
                     <Badge className="text-xs">+{Math.round((currentProperty.predictedValue1Y - currentProperty.currentValue) / currentProperty.currentValue * 100)}%</Badge>
                   </div>
                   <div className="space-y-2 p-4 rounded-lg bg-background border-2">
                     <p className="text-sm text-muted-foreground">Predicción 3A</p>
-                    <p className="text-3xl font-bold text-emerald-600">${currentProperty.predictedValue3Y.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-emerald-600">${currentProperty.predictedValue3Y.toLocaleString('en-US')}</p>
                     <Badge className="text-xs">+{Math.round((currentProperty.predictedValue3Y - currentProperty.currentValue) / currentProperty.currentValue * 100)}%</Badge>
                   </div>
                   <div className="space-y-2 p-4 rounded-lg bg-background border-2">
                     <p className="text-sm text-muted-foreground">Predicción 10A</p>
-                    <p className="text-3xl font-bold text-purple-600">${currentProperty.predictedValue10Y.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-purple-600">${currentProperty.predictedValue10Y.toLocaleString('en-US')}</p>
                     <Badge className="text-xs">+{Math.round((currentProperty.predictedValue10Y - currentProperty.currentValue) / currentProperty.currentValue * 100)}%</Badge>
                   </div>
                 </div>
@@ -433,7 +433,7 @@ export default function EquityForecast() {
                       <div className="grid grid-cols-3 gap-2 pt-2 border-t">
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground">Costo</p>
-                          <p className="font-semibold text-sm">${tip.estimatedCost.toLocaleString()}</p>
+                          <p className="font-semibold text-sm">${tip.estimatedCost.toLocaleString('en-US')}</p>
                         </div>
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground">ROI</p>
