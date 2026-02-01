@@ -75,7 +75,7 @@ export default function SubscriptionCancelPage() {
 
               <div className="pt-4">
                 <a 
-                  href="mailto:soporte@hogarai.com" 
+                  href="mailto:soporte@sreis.com" 
                   className="text-sm text-slate-500 hover:text-emerald-600 flex items-center justify-center gap-2"
                 >
                   <HelpCircle className="h-4 w-4" />

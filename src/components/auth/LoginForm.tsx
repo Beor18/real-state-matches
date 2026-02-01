@@ -102,7 +102,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           </motion.div>
           <div className="space-y-2">
             <CardTitle className="text-2xl font-bold text-slate-900">
-              Bienvenido a HogarAI
+              Bienvenido a SREIS
             </CardTitle>
             <CardDescription>
               Ingresa tu email para recibir un enlace mágico de acceso

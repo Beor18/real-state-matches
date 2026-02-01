@@ -347,8 +347,8 @@ export default function PreciosPage() {
               </div>
               <p className="text-sm text-slate-400 pt-4">
                 ¿Tienes preguntas? Escríbenos a{' '}
-                <a href="mailto:soporte@hogarai.com" className="text-emerald-600 hover:underline">
-                  soporte@hogarai.com
+                <a href="mailto:soporte@sreis.com" className="text-emerald-600 hover:underline">
+                  soporte@sreis.com
                 </a>
               </p>
             </motion.div>

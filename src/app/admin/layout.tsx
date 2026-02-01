@@ -124,10 +124,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <Link href="/admin" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">HA</span>
+              <span className="text-white font-bold text-sm">SR</span>
             </div>
             <div>
-              <span className="font-bold text-gray-900 dark:text-white">HogarAI</span>
+              <span className="font-bold text-gray-900 dark:text-white">SREIS</span>
               <span className="text-xs text-gray-500 dark:text-gray-400 block">Admin Panel</span>
             </div>
           </Link>

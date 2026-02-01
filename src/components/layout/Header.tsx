@@ -110,7 +110,7 @@ export default function Header({
               <Home className="h-4 w-4 text-white" />
             </div>
             <span className="text-lg font-semibold tracking-tight text-slate-900">
-              Hogar<span className="text-emerald-600">AI</span>
+              SRE<span className="text-emerald-600">IS</span>
             </span>
           </Link>
         </div>
@@ -128,7 +128,7 @@ export default function Header({
               <Home className="h-4 w-4 text-white" />
             </div>
             <span className="text-lg font-semibold tracking-tight text-slate-900">
-              Hogar<span className="text-emerald-600">AI</span>
+              SRE<span className="text-emerald-600">IS</span>
             </span>
           </Link>
 

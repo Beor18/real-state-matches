@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -106,6 +107,7 @@ const PRIORITY_OPTIONS = [
 
 export default function BuscarPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [step, setStep] = useState<"form" | "analyzing" | "results" | "error">(
     "form",
   );
@@ -212,6 +214,29 @@ export default function BuscarPage() {
     } finally {
       setSavingPropertyId(null);
     }
+  };
+
+  // Navigate to property detail, saving data to sessionStorage first
+  const handleViewDetails = (match: PropertyMatch) => {
+    // Save complete property data to sessionStorage for detail page
+    const propertyData = {
+      id: match.id,
+      sourceProvider: match.sourceProvider || 'unknown',
+      title: match.title,
+      description: '',
+      price: match.price,
+      address: match.address,
+      city: match.city || '',
+      bedrooms: match.bedrooms,
+      bathrooms: match.bathrooms,
+      squareFeet: match.squareFeet,
+      amenities: match.amenities,
+      images: match.images || [],
+      matchScore: match.matchScore,
+      matchReasons: match.matchReasons,
+    };
+    sessionStorage.setItem(`property_${match.id}`, JSON.stringify(propertyData));
+    router.push(`/propiedad/${match.id}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -415,7 +440,10 @@ export default function BuscarPage() {
                                     $30,000
                                   </span>
                                   <span className="font-semibold text-lg text-emerald-600">
-                                    ${parseInt(answers.budget).toLocaleString('en-US')}
+                                    $
+                                    {parseInt(answers.budget).toLocaleString(
+                                      "en-US",
+                                    )}
                                   </span>
                                   <span className="text-slate-500">
                                     $2,000,000
@@ -955,7 +983,7 @@ export default function BuscarPage() {
                                       : "text-slate-900",
                                   )}
                                 >
-                                  ${match.price.toLocaleString('en-US')}
+                                  ${match.price.toLocaleString("en-US")}
                                 </p>
 
                                 {/* Stats Row */}
@@ -971,7 +999,8 @@ export default function BuscarPage() {
                                   <span className="flex items-center gap-1.5">
                                     <Maximize className="h-4 w-4 text-slate-400" />
                                     <span>
-                                      {match.squareFeet.toLocaleString('en-US')} ft²
+                                      {match.squareFeet.toLocaleString("en-US")}{" "}
+                                      ft²
                                     </span>
                                   </span>
                                 </div>
@@ -1033,6 +1062,7 @@ export default function BuscarPage() {
 
                                 {/* Button */}
                                 <Button
+                                  onClick={() => handleViewDetails(match)}
                                   className={cn(
                                     "w-full",
                                     isFeatured
@@ -1062,7 +1092,7 @@ export default function BuscarPage() {
                                       Propiedades Destacadas
                                     </h2>
                                     <p className="text-sm text-slate-500">
-                                      MLS Puerto Rico - Listados verificados
+                                      Listados verificados
                                     </p>
                                   </div>
                                 </div>

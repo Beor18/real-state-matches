@@ -95,7 +95,7 @@ export default function AdminDashboard() {
           Panel de Administración
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Bienvenido al panel de control de HogarAI
+          Bienvenido al panel de control de SREIS
         </p>
       </div>
 

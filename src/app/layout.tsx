@@ -12,23 +12,23 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "HogarAI - Encuentra tu hogar ideal en Puerto Rico",
+  title: "SREIS - Smart Real Estate Intelligence System",
   description: "Describe tu estilo de vida ideal y nuestra IA encontrará las propiedades perfectas para ti en Puerto Rico.",
-  keywords: ["bienes raíces", "real estate", "Puerto Rico", "IA", "AI", "propiedades", "hogar", "apartamentos"],
-  authors: [{ name: "HogarAI" }],
+  keywords: ["bienes raíces", "real estate", "Puerto Rico", "IA", "AI", "propiedades", "hogar", "apartamentos", "SREIS"],
+  authors: [{ name: "SREIS" }],
   icons: {
     icon: "/logo.svg",
   },
   openGraph: {
-    title: "HogarAI - Encuentra tu hogar ideal",
+    title: "SREIS - Smart Real Estate Intelligence System",
     description: "Búsqueda inteligente de propiedades basada en tu estilo de vida",
     url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-    siteName: "HogarAI",
+    siteName: "SREIS",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "HogarAI - Encuentra tu hogar ideal",
+    title: "SREIS - Smart Real Estate Intelligence System",
     description: "Búsqueda inteligente de propiedades basada en tu estilo de vida",
   },
 };

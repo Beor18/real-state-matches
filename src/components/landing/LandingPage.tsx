@@ -665,7 +665,7 @@ export default function LandingPage() {
                 <div className="h-8 w-8 rounded-lg bg-slate-900 flex items-center justify-center">
                   <Home className="h-4 w-4 text-white" />
                 </div>
-                <span className="font-semibold text-slate-900">HogarAI</span>
+                <span className="font-semibold text-slate-900">SREIS</span>
               </Link>
               <p className="text-sm text-slate-500">
                 La forma más inteligente de encontrar tu próximo hogar.
@@ -702,7 +702,7 @@ export default function LandingPage() {
           </div>
           <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-slate-400">
-              © {new Date().getFullYear()} HogarAI. Todos los derechos reservados.
+              © {new Date().getFullYear()} SREIS. Todos los derechos reservados.
             </p>
             <div className="flex items-center gap-4">
               <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">

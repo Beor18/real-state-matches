@@ -340,7 +340,16 @@ export default function DashboardPage() {
                             
                             {/* Actions */}
                             <div className="flex items-center gap-2 mt-3">
-                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="h-7 text-xs gap-1"
+                                onClick={() => {
+                                  // Store property data in sessionStorage for the detail page
+                                  sessionStorage.setItem(`property_${saved.property_id}`, JSON.stringify(property))
+                                  router.push(`/propiedad/${saved.property_id}`)
+                                }}
+                              >
                                 <ExternalLink className="h-3 w-3" />
                                 Ver
                               </Button>
