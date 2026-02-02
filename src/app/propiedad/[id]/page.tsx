@@ -725,7 +725,7 @@ export default function PropertyDetailPage() {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-500">Tipo</span>
                     <span className="font-medium capitalize">
-                      {property.details?.propertyType ?? "Residencial"}
+                      {property.details?.propertyType ?? "Residencia"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
