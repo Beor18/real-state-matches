@@ -102,14 +102,14 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // If no locations found, use default
+    // If no locations found, use default (Puerto Rico for Xposure integration)
     if (searchLocations.length === 0) {
       searchLocations.push({
-        city: 'New York',
-        state: 'NY',
+        city: undefined,
+        state: 'PR',
         source: 'default',
       })
-      console.log('No locations found, using default: New York, NY')
+      console.log('No locations found, using default: Puerto Rico')
     }
     
     console.log(`Searching in ${searchLocations.length} location(s):`, searchLocations)
