@@ -317,6 +317,9 @@ class XposureClient {
       if (params.propertyType) {
         query = query.eq("property_type", params.propertyType);
       }
+      if (params.listingType) {
+        query = query.eq("listing_type", params.listingType);
+      }
       if (params.status) {
         query = query.eq("status", params.status);
       }
@@ -544,11 +547,13 @@ class XposureClient {
     };
 
     // Determine property type from icon
+    // Xposure icons: green_single_family.png, green_townhouse.png, green_apartment_unit.png, green_lots_acreage.png
     const propertyTypeFromIcon = (icon: string): string => {
+      if (icon.includes("single_family")) return "house";
       if (icon.includes("apartment")) return "apartment";
-      if (icon.includes("house")) return "house";
+      if (icon.includes("townhouse")) return "townhouse";
       if (icon.includes("condo")) return "condo";
-      if (icon.includes("land")) return "land";
+      if (icon.includes("lots") || icon.includes("acreage")) return "land";
       if (icon.includes("commercial")) return "commercial";
       return "residential";
     };

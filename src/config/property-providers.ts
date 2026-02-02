@@ -36,6 +36,7 @@ export interface PropertySearchParams {
   minPrice?: number
   maxPrice?: number
   propertyType?: string
+  listingType?: 'sale' | 'rent'
   bedrooms?: number
   bathrooms?: number
   minSquareFeet?: number

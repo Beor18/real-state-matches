@@ -50,6 +50,10 @@ import {
   Shuffle,
   HelpCircle,
   Star,
+  Building,
+  Building2,
+  LandPlot,
+  ShoppingBag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -105,6 +109,20 @@ const PRIORITY_OPTIONS = [
   { value: "flexibilidad", label: "Flexibilidad", icon: Shuffle },
 ];
 
+const PROPERTY_TYPE_OPTIONS = [
+  { value: "", label: "Cualquiera", icon: Home },
+  { value: "house", label: "Casa", icon: Home },
+  { value: "apartment", label: "Apartamento", icon: Building },
+  { value: "townhouse", label: "Townhouse", icon: Building2 },
+  { value: "land", label: "Terreno", icon: LandPlot },
+];
+
+const LISTING_TYPE_OPTIONS = [
+  { value: "", label: "Cualquiera", icon: ShoppingBag },
+  { value: "sale", label: "Compra", icon: ShoppingBag },
+  { value: "rent", label: "Alquiler", icon: ShoppingBag },
+];
+
 export default function BuscarPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -118,6 +136,8 @@ export default function BuscarPage() {
     purpose: "",
     timeline: "",
     priority: "",
+    propertyType: "",
+    listingType: "",
   });
   const [matches, setMatches] = useState<PropertyMatch[]>([]);
   const [searchError, setSearchError] = useState<SearchError | null>(null);
@@ -248,17 +268,17 @@ export default function BuscarPage() {
       providersQueried,
       savedAt: Date.now(),
     };
-    sessionStorage.setItem('search_state', JSON.stringify(searchState));
+    sessionStorage.setItem("search_state", JSON.stringify(searchState));
 
     // Save complete property data to sessionStorage for detail page
     const propertyData = {
       id: match.id,
-      sourceProvider: match.sourceProvider || 'unknown',
+      sourceProvider: match.sourceProvider || "unknown",
       title: match.title,
-      description: '',
+      description: "",
       price: match.price,
       address: match.address,
-      city: match.city || '',
+      city: match.city || "",
       bedrooms: match.bedrooms,
       bathrooms: match.bathrooms,
       squareFeet: match.squareFeet,
@@ -267,7 +287,10 @@ export default function BuscarPage() {
       matchScore: match.matchScore,
       matchReasons: match.matchReasons,
     };
-    sessionStorage.setItem(`property_${match.id}`, JSON.stringify(propertyData));
+    sessionStorage.setItem(
+      `property_${match.id}`,
+      JSON.stringify(propertyData),
+    );
     router.push(`/propiedad/${match.id}`);
   };
 
@@ -289,6 +312,9 @@ export default function BuscarPage() {
           purpose: answers.purpose,
           timeline: answers.timeline,
           mainPriority: answers.priority,
+          // Property filters
+          propertyType: answers.propertyType || undefined,
+          listingType: answers.listingType || undefined,
         }),
       });
 
@@ -353,6 +379,8 @@ export default function BuscarPage() {
       purpose: "",
       timeline: "",
       priority: "",
+      propertyType: "",
+      listingType: "",
     });
     setMatches([]);
     setSearchError(null);
@@ -623,6 +651,107 @@ export default function BuscarPage() {
                                       <Icon
                                         className={`h-6 w-6 ${
                                           answers.priority === option.value
+                                            ? "text-emerald-600"
+                                            : "text-slate-400"
+                                        }`}
+                                      />
+                                      <span className="text-sm font-medium text-center">
+                                        {option.label}
+                                      </span>
+                                    </Label>
+                                  );
+                                })}
+                              </RadioGroup>
+                            </div>
+
+                            {/* Property Type */}
+                            <div className="space-y-3">
+                              <Label className="text-base font-medium">
+                                Tipo de propiedad
+                              </Label>
+                              <RadioGroup
+                                value={answers.propertyType}
+                                onValueChange={(value) =>
+                                  setAnswers({
+                                    ...answers,
+                                    propertyType: value,
+                                  })
+                                }
+                                className="grid grid-cols-2 sm:grid-cols-3 gap-3"
+                              >
+                                {PROPERTY_TYPE_OPTIONS.map((option) => {
+                                  const Icon = option.icon;
+                                  return (
+                                    <Label
+                                      key={option.value}
+                                      htmlFor={`propertyType-${
+                                        option.value || "any"
+                                      }`}
+                                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                        answers.propertyType === option.value
+                                          ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                                      }`}
+                                    >
+                                      <RadioGroupItem
+                                        value={option.value}
+                                        id={`propertyType-${
+                                          option.value || "any"
+                                        }`}
+                                        className="sr-only"
+                                      />
+                                      <Icon
+                                        className={`h-6 w-6 ${
+                                          answers.propertyType === option.value
+                                            ? "text-emerald-600"
+                                            : "text-slate-400"
+                                        }`}
+                                      />
+                                      <span className="text-sm font-medium text-center">
+                                        {option.label}
+                                      </span>
+                                    </Label>
+                                  );
+                                })}
+                              </RadioGroup>
+                            </div>
+
+                            {/* Listing Type */}
+                            <div className="space-y-3">
+                              <Label className="text-base font-medium">
+                                ¿Compra o alquiler?
+                              </Label>
+                              <RadioGroup
+                                value={answers.listingType}
+                                onValueChange={(value) =>
+                                  setAnswers({ ...answers, listingType: value })
+                                }
+                                className="grid grid-cols-3 gap-3"
+                              >
+                                {LISTING_TYPE_OPTIONS.map((option) => {
+                                  const Icon = option.icon;
+                                  return (
+                                    <Label
+                                      key={option.value}
+                                      htmlFor={`listingType-${
+                                        option.value || "any"
+                                      }`}
+                                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                        answers.listingType === option.value
+                                          ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                                      }`}
+                                    >
+                                      <RadioGroupItem
+                                        value={option.value}
+                                        id={`listingType-${
+                                          option.value || "any"
+                                        }`}
+                                        className="sr-only"
+                                      />
+                                      <Icon
+                                        className={`h-6 w-6 ${
+                                          answers.listingType === option.value
                                             ? "text-emerald-600"
                                             : "text-slate-400"
                                         }`}
@@ -937,9 +1066,7 @@ export default function BuscarPage() {
                                         : "bg-black/60 text-white border-0",
                                     )}
                                   >
-                                    {isFeatured
-                                      ? "Puerto Rico"
-                                      : match.sourceProvider}
+                                    {isFeatured ? "Puerto Rico" : match.city}
                                   </Badge>
                                 </div>
 

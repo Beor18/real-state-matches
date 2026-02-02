@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
 
     const body = await request.json()
-    const { idealLifeDescription, priorities, budget, location, preferredPropertyTypes } = body
+    const { idealLifeDescription, priorities, budget, location, preferredPropertyTypes, propertyType, listingType } = body
 
     if (!idealLifeDescription) {
       return NextResponse.json(
@@ -118,14 +118,15 @@ export async function POST(request: NextRequest) {
     // Budget is a MAXIMUM, so we search from 0 to budget (not a central range)
     const locationResults = await Promise.all(
       searchLocations.map(async (loc) => {
-        console.log(`Searching properties in: ${loc.city || ''} ${loc.state || ''} (source: ${loc.source}), budget max: $${budget}`)
+        console.log(`Searching properties in: ${loc.city || ''} ${loc.state || ''} (source: ${loc.source}), budget max: $${budget}, propertyType: ${propertyType || 'any'}, listingType: ${listingType || 'any'}`)
         return searchPropertiesFromProviders({
           city: loc.city,
           state: loc.state,
           zipCode: loc.zipCode,
           minPrice: undefined, // No minimum - search all prices up to budget
           maxPrice: budget || undefined, // Budget is the maximum
-          propertyType: preferredPropertyTypes?.[0],
+          propertyType: propertyType || preferredPropertyTypes?.[0],
+          listingType: listingType || undefined,
           status: 'active',
         })
       })
