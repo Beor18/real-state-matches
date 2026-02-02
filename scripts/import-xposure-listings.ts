@@ -91,6 +91,7 @@ interface DatabasePropertyInsert {
   longitude: number | null;
   status: string;
   featured: boolean;
+  xposure_uid: string | null;
 }
 
 // Parse price from string like "USD $2,300.00"
@@ -164,6 +165,22 @@ function mapStatus(status: string): string {
   return statusMap[status?.toLowerCase()] || "active";
 }
 
+// Generate photo gallery URLs from Xposure UID and photo count
+// Photos follow the pattern: https://images.realtyserver.com/photo_server.php?btnSubmit=GetPhoto&board=puerto_rico&name={uid}.L{number}
+// Where number goes from 01 to pcount (L01, L02, L03... L10, L11, etc.)
+function generatePhotoGalleryUrls(uid: string, photoCount: number): string[] {
+  const images: string[] = [];
+  const maxPhotos = Math.min(photoCount, 20); // Limit to 20 photos max for performance
+
+  for (let i = 1; i <= maxPhotos; i++) {
+    const photoNumber = i.toString().padStart(2, "0"); // 01, 02, 03...
+    const url = `https://images.realtyserver.com/photo_server.php?btnSubmit=GetPhoto&board=puerto_rico&name=${uid}.L${photoNumber}`;
+    images.push(url);
+  }
+
+  return images;
+}
+
 // Transform Xposure property to database format
 function transformToDatabase(
   xposure: XposureProperty,
@@ -223,13 +240,15 @@ function transformToDatabase(
     amenities.push("Urbanización");
   }
 
-  // Images array
+  // Images array - generate full photo gallery from uid and pcount
   const images: string[] = [];
-  if (xposure.thumbnailPhotoURL) {
-    // Convert thumbnail URL to full size URL
+  if (xposure.uid && xposure.pcount > 0) {
+    // Generate all photo URLs using the Xposure UID
+    images.push(...generatePhotoGalleryUrls(xposure.uid, xposure.pcount));
+  } else if (xposure.thumbnailPhotoURL) {
+    // Fallback to thumbnail if uid/pcount not available
     const fullSizeUrl = xposure.thumbnailPhotoURL.replace("&thumbnail", "");
     images.push(fullSizeUrl);
-    images.push(xposure.thumbnailPhotoURL); // Also keep thumbnail as backup
   }
 
   return {
@@ -263,6 +282,8 @@ function transformToDatabase(
     status: mapStatus(xposure.status),
     // Mark first 10 properties with valid price as featured
     featured: index < 10 && price > 0,
+    // Store original Xposure UID for photo gallery URL generation
+    xposure_uid: xposure.uid || null,
   };
 }
 
@@ -328,6 +349,29 @@ async function main() {
   console.log(`   - Featured (first 5 with price): ${featuredCount}`);
   console.log();
 
+  // Check if xposure_uid column exists in the database
+  console.log("🔍 Checking database schema...");
+  let hasXposureUidColumn = false;
+  try {
+    const { data: testData, error: testError } = await supabase
+      .from("properties")
+      .select("xposure_uid")
+      .limit(1);
+    hasXposureUidColumn = !testError;
+  } catch {
+    hasXposureUidColumn = false;
+  }
+
+  if (!hasXposureUidColumn) {
+    console.log(
+      "⚠️  Column 'xposure_uid' not found. Run migration 012_xposure_uid.sql to add it.",
+    );
+    console.log("   Continuing without xposure_uid field...");
+  } else {
+    console.log("✅ Schema check passed");
+  }
+  console.log();
+
   // Delete existing Xposure properties first (clean sync)
   console.log("🗑️  Removing old Xposure properties...");
   const { error: deleteError } = await supabase
@@ -353,7 +397,14 @@ async function main() {
   console.log();
 
   for (let i = 0; i < validProperties.length; i += batchSize) {
-    const batch = validProperties.slice(i, i + batchSize);
+    // Remove xposure_uid if column doesn't exist
+    const batch = validProperties.slice(i, i + batchSize).map((p) => {
+      if (!hasXposureUidColumn) {
+        const { xposure_uid, ...rest } = p;
+        return rest;
+      }
+      return p;
+    });
     const batchNum = Math.floor(i / batchSize) + 1;
     const totalBatches = Math.ceil(validProperties.length / batchSize);
 
