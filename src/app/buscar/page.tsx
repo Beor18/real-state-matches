@@ -127,6 +127,28 @@ export default function BuscarPage() {
   );
   const [savingPropertyId, setSavingPropertyId] = useState<string | null>(null);
 
+  // Restore search state from sessionStorage if returning from property detail
+  useEffect(() => {
+    const savedState = sessionStorage.getItem("search_state");
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        // Only restore if saved within last 30 minutes
+        if (Date.now() - parsed.savedAt < 30 * 60 * 1000) {
+          setStep(parsed.step);
+          setAnswers(parsed.answers);
+          setMatches(parsed.matches);
+          setProvidersQueried(parsed.providersQueried || []);
+        }
+        // Clean up after restoring
+        sessionStorage.removeItem("search_state");
+      } catch (e) {
+        console.error("Error restoring search state:", e);
+        sessionStorage.removeItem("search_state");
+      }
+    }
+  }, []);
+
   // Fetch saved properties on mount if user is logged in
   useEffect(() => {
     if (user) {
@@ -218,6 +240,16 @@ export default function BuscarPage() {
 
   // Navigate to property detail, saving data to sessionStorage first
   const handleViewDetails = (match: PropertyMatch) => {
+    // Save search state to restore when returning
+    const searchState = {
+      step,
+      answers,
+      matches,
+      providersQueried,
+      savedAt: Date.now(),
+    };
+    sessionStorage.setItem('search_state', JSON.stringify(searchState));
+
     // Save complete property data to sessionStorage for detail page
     const propertyData = {
       id: match.id,
@@ -311,6 +343,8 @@ export default function BuscarPage() {
   };
 
   const resetSearch = () => {
+    // Clear any saved search state
+    sessionStorage.removeItem("search_state");
     setStep("form");
     setAnswers({
       lifestyle: "",
