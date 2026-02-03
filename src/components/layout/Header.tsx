@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { useAuth } from '@/components/auth/AuthProvider'
-import { usePageConfig } from '@/hooks/usePageConfig'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { usePageConfig } from "@/hooks/usePageConfig";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Home,
   User,
@@ -19,89 +19,95 @@ import {
   Bell,
   Settings,
   Shield,
-} from 'lucide-react'
+} from "lucide-react";
 
 interface HeaderProps {
-  variant?: 'default' | 'minimal' | 'dashboard'
-  showCTA?: boolean
-  transparent?: boolean
-  activeItem?: string
+  variant?: "default" | "minimal" | "dashboard";
+  showCTA?: boolean;
+  transparent?: boolean;
+  activeItem?: string;
 }
 
 // Default nav items configuration
 const defaultNavItems = [
-  { href: '/', label: 'Inicio', pageKey: 'page-home' },
-  { href: '/buscar', label: 'Buscar Propiedades', pageKey: 'page-buscar' },
-  { href: '/precios', label: 'Precios', pageKey: 'page-precios' },
-]
+  { href: "/", label: "Inicio", pageKey: "page-home" },
+  { href: "/buscar", label: "Buscar Propiedades", pageKey: "page-buscar" },
+  { href: "/precios", label: "Precios", pageKey: "page-precios" },
+];
 
-export default function Header({ 
-  variant = 'default', 
+export default function Header({
+  variant = "default",
   showCTA = false,
   transparent = false,
   activeItem,
 }: HeaderProps) {
-  const { user, dbUser, subscription, signOut, isLoading: authLoading } = useAuth()
-  const { isPageEnabled, isLoading: pagesLoading } = usePageConfig()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const pathname = usePathname()
+  const {
+    user,
+    dbUser,
+    subscription,
+    signOut,
+    isLoading: authLoading,
+  } = useAuth();
+  const { isPageEnabled, isLoading: pagesLoading } = usePageConfig();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
-  const isAdmin = dbUser?.role === 'admin'
-  const hasSubscription = subscription?.status === 'active'
+  const isAdmin = dbUser?.role === "admin";
+  const hasSubscription = subscription?.status === "active";
 
   // Filter nav items based on page visibility settings
   // Admins can see all pages, regular users only see enabled pages
   const navItems = useMemo(() => {
-    if (pagesLoading) return defaultNavItems // Show all while loading
-    return defaultNavItems.filter(item => {
+    if (pagesLoading) return defaultNavItems; // Show all while loading
+    return defaultNavItems.filter((item) => {
       // Always show home
-      if (item.href === '/') return true
+      if (item.href === "/") return true;
       // Admins see all pages
-      if (isAdmin) return true
+      if (isAdmin) return true;
       // Check if page is enabled
-      return isPageEnabled(item.pageKey)
-    })
-  }, [isPageEnabled, isAdmin, pagesLoading])
+      return isPageEnabled(item.pageKey);
+    });
+  }, [isPageEnabled, isAdmin, pagesLoading]);
 
   // Determine active nav item
   const getActiveItem = () => {
-    if (activeItem) return activeItem
-    if (pathname === '/') return '/'
-    if (pathname.startsWith('/buscar')) return '/buscar'
-    if (pathname.startsWith('/precios')) return '/precios'
-    if (pathname.startsWith('/dashboard')) return '/dashboard'
-    return pathname
-  }
+    if (activeItem) return activeItem;
+    if (pathname === "/") return "/";
+    if (pathname.startsWith("/buscar")) return "/buscar";
+    if (pathname.startsWith("/precios")) return "/precios";
+    if (pathname.startsWith("/dashboard")) return "/dashboard";
+    return pathname;
+  };
 
-  const currentActiveItem = getActiveItem()
+  const currentActiveItem = getActiveItem();
 
   // Header positioning and styling based on variant
   const getHeaderClasses = () => {
-    const base = 'w-full z-50 border-b transition-all'
-    
-    if (variant === 'minimal') {
-      return `${base} bg-white/90 backdrop-blur-md border-slate-100`
+    const base = "w-full z-50 border-b transition-all";
+
+    if (variant === "minimal") {
+      return `${base} bg-white/90 backdrop-blur-md border-slate-100`;
     }
-    
-    if (variant === 'dashboard') {
-      return `${base} sticky top-0 bg-white/90 backdrop-blur-md border-slate-100`
+
+    if (variant === "dashboard") {
+      return `${base} sticky top-0 bg-white/90 backdrop-blur-md border-slate-100`;
     }
-    
+
     // Default variant
     return `${base} fixed top-0 left-0 right-0 ${
-      transparent 
-        ? 'bg-transparent border-transparent' 
-        : 'bg-white/80 backdrop-blur-xl border-slate-100'
-    }`
-  }
+      transparent
+        ? "bg-transparent border-transparent"
+        : "bg-white/80 backdrop-blur-xl border-slate-100"
+    }`;
+  };
 
   const handleSignOut = async () => {
-    await signOut()
-    setMobileMenuOpen(false)
-  }
+    await signOut();
+    setMobileMenuOpen(false);
+  };
 
   // Minimal variant - just logo
-  if (variant === 'minimal') {
+  if (variant === "minimal") {
     return (
       <header className={getHeaderClasses()}>
         <div className="max-w-6xl mx-auto px-6 py-4">
@@ -110,12 +116,12 @@ export default function Header({
               <Home className="h-4 w-4 text-white" />
             </div>
             <span className="text-lg font-semibold tracking-tight text-slate-900">
-              SRE<span className="text-emerald-600">IS</span>
+              SMAR<span className="text-emerald-600">LIN</span>
             </span>
           </Link>
         </div>
       </header>
-    )
+    );
   }
 
   return (
@@ -128,7 +134,7 @@ export default function Header({
               <Home className="h-4 w-4 text-white" />
             </div>
             <span className="text-lg font-semibold tracking-tight text-slate-900">
-              SRE<span className="text-emerald-600">IS</span>
+              SMAR<span className="text-emerald-600">LIN</span>
             </span>
           </Link>
 
@@ -140,8 +146,8 @@ export default function Header({
                 href={item.href}
                 className={`text-sm transition-colors ${
                   currentActiveItem === item.href
-                    ? 'text-emerald-600 font-medium'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? "text-emerald-600 font-medium"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {item.label}
@@ -168,7 +174,11 @@ export default function Header({
                       {/* Admin link */}
                       {isAdmin && (
                         <Link href="/admin">
-                          <Button variant="ghost" size="sm" className="text-slate-600">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-slate-600"
+                          >
                             <Shield className="h-4 w-4 mr-2" />
                             Admin
                           </Button>
@@ -176,7 +186,7 @@ export default function Header({
                       )}
 
                       {/* Dashboard icons for dashboard variant */}
-                      {variant === 'dashboard' && (
+                      {variant === "dashboard" && (
                         <>
                           <Button variant="ghost" size="icon">
                             <Bell className="h-5 w-5" />
@@ -189,17 +199,21 @@ export default function Header({
 
                       {/* Account link */}
                       <Link href="/dashboard">
-                        <Button variant="ghost" size="sm" className="text-slate-600">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-slate-600"
+                        >
                           <User className="h-4 w-4 mr-2" />
-                          {variant === 'dashboard' ? '' : 'Mi Cuenta'}
+                          {variant === "dashboard" ? "" : "Mi Cuenta"}
                         </Button>
                       </Link>
 
                       {/* Logout */}
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={handleSignOut} 
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSignOut}
                         className="text-slate-400 hover:text-slate-600"
                       >
                         <LogOut className="h-4 w-4" />
@@ -208,14 +222,17 @@ export default function Header({
                   </>
                 ) : (
                   <Link href="/auth/login" className="hidden md:block">
-                    <Button variant="ghost" size="sm" className="text-slate-600">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-600"
+                    >
                       Iniciar Sesión
                     </Button>
                   </Link>
                 )}
               </>
             )}
-
 
             {/* Mobile Menu Button */}
             <Button
@@ -224,7 +241,11 @@ export default function Header({
               className="md:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </Button>
           </div>
         </div>
@@ -234,7 +255,7 @@ export default function Header({
           {mobileMenuOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden pt-4 pb-2 border-t mt-4"
             >
@@ -246,8 +267,8 @@ export default function Header({
                     onClick={() => setMobileMenuOpen(false)}
                     className={`px-3 py-2.5 text-sm rounded-lg transition-colors ${
                       currentActiveItem === item.href
-                        ? 'bg-emerald-50 text-emerald-600 font-medium'
-                        : 'text-slate-600 hover:bg-slate-50'
+                        ? "bg-emerald-50 text-emerald-600 font-medium"
+                        : "text-slate-600 hover:bg-slate-50"
                     }`}
                   >
                     {item.label}
@@ -279,8 +300,15 @@ export default function Header({
                         </div>
                       )}
 
-                      <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                        <Button variant="ghost" size="sm" className="w-full justify-start">
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start"
+                        >
                           <User className="h-4 w-4 mr-2" />
                           Mi Cuenta
                         </Button>
@@ -296,13 +324,15 @@ export default function Header({
                       </Button>
                     </>
                   ) : (
-                    <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
+                    <Link
+                      href="/auth/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
                       <Button variant="outline" size="sm" className="w-full">
                         Iniciar Sesión
                       </Button>
                     </Link>
                   )}
-
                 </div>
               </div>
             </motion.div>
@@ -310,7 +340,5 @@ export default function Header({
         </AnimatePresence>
       </div>
     </header>
-  )
+  );
 }
-
-

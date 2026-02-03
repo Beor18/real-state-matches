@@ -16,6 +16,21 @@ interface BridgeConfig {
   apiUrl: string
 }
 
+// Bridge Media item with all quality-related fields
+interface BridgeMediaItem {
+  MediaURL: string
+  ResizeMediaURL?: string      // URL for resizable version (high quality)
+  MediaCategory?: string       // 'Photo', 'Video', etc.
+  ShortDescription?: string
+  Order?: number
+  ImageHeight?: number         // Image height in pixels
+  ImageWidth?: number          // Image width in pixels
+  ImageSizeDescription?: string // 'Thumbnail', 'Small', 'Medium', 'Large', 'X-Large', 'Largest'
+  MimeType?: string
+  MediaType?: string
+  PreferredPhotoYN?: boolean   // Indicates if this is the preferred/primary photo
+}
+
 // Bridge Data Output property format
 interface BridgeProperty {
   ListingId: string
@@ -57,12 +72,7 @@ interface BridgeProperty {
   ParkingFeatures?: string[]
   PoolFeatures?: string[]
   WaterfrontFeatures?: string[]
-  Media?: Array<{
-    MediaURL: string
-    MediaCategory?: string
-    ShortDescription?: string
-    Order?: number
-  }>
+  Media?: BridgeMediaItem[]
   VirtualTourURLUnbranded?: string
   ListAgentFullName?: string
   ListAgentEmail?: string
@@ -265,6 +275,104 @@ class ZillowBridgeClient {
     return this.searchListings(params)
   }
 
+  // Get the highest quality image URL available from a media item
+  private getHighQualityImageUrl(media: BridgeMediaItem): string {
+    // Priority 1: Use ResizeMediaURL if available (typically supports high-res)
+    if (media.ResizeMediaURL) {
+      return media.ResizeMediaURL
+    }
+
+    // Priority 2: Use MediaURL directly
+    // Apply URL transformations for known CDN patterns to get highest quality
+    let url = media.MediaURL
+
+    // Pattern: Some CDNs use size suffixes like _s, _m, _l, _t (thumbnail)
+    // Try to get the largest version by removing size suffixes
+    const sizePatterns = [
+      { pattern: /_t\.(jpg|jpeg|png|webp)$/i, replacement: '.$1' },      // _t = thumbnail
+      { pattern: /_s\.(jpg|jpeg|png|webp)$/i, replacement: '.$1' },      // _s = small
+      { pattern: /_m\.(jpg|jpeg|png|webp)$/i, replacement: '.$1' },      // _m = medium
+      { pattern: /-thumb\.(jpg|jpeg|png|webp)$/i, replacement: '.$1' },  // -thumb
+      { pattern: /-small\.(jpg|jpeg|png|webp)$/i, replacement: '.$1' },  // -small
+      { pattern: /-medium\.(jpg|jpeg|png|webp)$/i, replacement: '.$1' }, // -medium
+    ]
+
+    for (const { pattern, replacement } of sizePatterns) {
+      if (pattern.test(url)) {
+        url = url.replace(pattern, replacement)
+        break
+      }
+    }
+
+    // Pattern: Some URLs have width/height params - try to maximize them
+    // e.g., ?w=200&h=150 -> ?w=1200&h=900 or remove size constraints
+    if (url.includes('?')) {
+      const urlObj = new URL(url)
+      const widthParams = ['w', 'width', 'resize_w']
+      const heightParams = ['h', 'height', 'resize_h']
+      
+      let hasResizeParams = false
+      for (const param of widthParams) {
+        if (urlObj.searchParams.has(param)) {
+          urlObj.searchParams.set(param, '1200')
+          hasResizeParams = true
+        }
+      }
+      for (const param of heightParams) {
+        if (urlObj.searchParams.has(param)) {
+          urlObj.searchParams.set(param, '900')
+          hasResizeParams = true
+        }
+      }
+      
+      if (hasResizeParams) {
+        url = urlObj.toString()
+      }
+    }
+
+    return url
+  }
+
+  // Get image quality score for sorting (higher is better)
+  private getImageQualityScore(media: BridgeMediaItem): number {
+    let score = 0
+
+    // Score based on ImageSizeDescription
+    const sizeScores: Record<string, number> = {
+      'Largest': 100,
+      'X-Large': 90,
+      'Large': 80,
+      'Medium': 50,
+      'Small': 20,
+      'Thumbnail': 10,
+    }
+    if (media.ImageSizeDescription) {
+      score += sizeScores[media.ImageSizeDescription] || 50
+    }
+
+    // Score based on actual dimensions (prefer larger images)
+    if (media.ImageWidth && media.ImageHeight) {
+      const pixels = media.ImageWidth * media.ImageHeight
+      if (pixels >= 2000000) score += 100      // 2MP+
+      else if (pixels >= 1000000) score += 80  // 1MP+
+      else if (pixels >= 500000) score += 60   // 0.5MP+
+      else if (pixels >= 250000) score += 40   // 0.25MP+
+      else score += 20
+    }
+
+    // Bonus for ResizeMediaURL (indicates high-quality source)
+    if (media.ResizeMediaURL) {
+      score += 50
+    }
+
+    // Bonus for preferred photo
+    if (media.PreferredPhotoYN) {
+      score += 200 // Ensure preferred photo appears first
+    }
+
+    return score
+  }
+
   // Transform Bridge property to normalized format
   transformToNormalized(bridgeProperty: BridgeProperty): NormalizedProperty {
     // Build full address
@@ -291,11 +399,34 @@ class ZillowBridgeClient {
       ...(bridgeProperty.WaterfrontFeatures || []),
     ]
 
-    // Get images sorted by order
-    const images = (bridgeProperty.Media || [])
+    // Get images prioritizing highest quality
+    // 1. Filter to only photos with valid URLs
+    // 2. Sort by quality score (highest first), then by order
+    // 3. Extract high-quality URLs, removing duplicates
+    const mediaItems = (bridgeProperty.Media || [])
       .filter(m => m.MediaURL && m.MediaCategory === 'Photo')
-      .sort((a, b) => (a.Order || 0) - (b.Order || 0))
-      .map(m => m.MediaURL)
+      .sort((a, b) => {
+        // First, prioritize by quality score
+        const qualityDiff = this.getImageQualityScore(b) - this.getImageQualityScore(a)
+        if (qualityDiff !== 0) return qualityDiff
+        // Then by order
+        return (a.Order || 0) - (b.Order || 0)
+      })
+
+    // Get unique high-quality image URLs
+    const seenUrls = new Set<string>()
+    const images: string[] = []
+    
+    for (const media of mediaItems) {
+      const highQualityUrl = this.getHighQualityImageUrl(media)
+      // Normalize URL for deduplication (remove trailing slashes, lowercase domain)
+      const normalizedUrl = highQualityUrl.toLowerCase().replace(/\/$/, '')
+      
+      if (!seenUrls.has(normalizedUrl)) {
+        seenUrls.add(normalizedUrl)
+        images.push(highQualityUrl)
+      }
+    }
 
     // Calculate total bathrooms
     const bathrooms = (bridgeProperty.BathroomsFull || 0) + 
@@ -370,5 +501,5 @@ export function createZillowBridgeClient(config: {
 }
 
 export { ZillowBridgeClient }
-export type { BridgeProperty, BridgeSearchResponse }
+export type { BridgeProperty, BridgeSearchResponse, BridgeMediaItem }
 
