@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { LoginPromptModal } from "@/components/auth/LoginPromptModal";
+import { MatchScoreModal } from "@/components/search/MatchScoreModal";
 import { PageGuard } from "@/components/PageGuard";
-import { SubscriptionGate } from "@/components/paywall/SubscriptionGate";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -146,6 +147,10 @@ export default function BuscarPage() {
     new Set(),
   );
   const [savingPropertyId, setSavingPropertyId] = useState<string | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginModalProperty, setLoginModalProperty] = useState<PropertyMatch | null>(null);
+  const [showMatchScoreModal, setShowMatchScoreModal] = useState(false);
+  const [matchScoreProperty, setMatchScoreProperty] = useState<PropertyMatch | null>(null);
 
   // Restore search state from sessionStorage if returning from property detail
   useEffect(() => {
@@ -193,7 +198,9 @@ export default function BuscarPage() {
 
   const toggleSaveProperty = async (match: PropertyMatch) => {
     if (!user) {
-      // Could show login prompt
+      // Show login prompt modal
+      setLoginModalProperty(match);
+      setShowLoginModal(true);
       return;
     }
 
@@ -438,9 +445,8 @@ export default function BuscarPage() {
                 {/* Form Section */}
                 <section className="py-12 md:py-16 bg-slate-50">
                   <div className="max-w-2xl mx-auto px-6">
-                    {/* Subscription Gate - wraps form for access control */}
-                    <SubscriptionGate showPreview={true}>
-                      <Card className="border-0 shadow-lg bg-white">
+                    {/* Form is now public - no login required to search */}
+                    <Card className="border-0 shadow-lg bg-white">
                         <CardContent className="p-6 md:p-8">
                           <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Lifestyle Description */}
@@ -781,7 +787,6 @@ export default function BuscarPage() {
                           </form>
                         </CardContent>
                       </Card>
-                    </SubscriptionGate>
                   </div>
                 </section>
               </motion.div>
@@ -1070,40 +1075,38 @@ export default function BuscarPage() {
                                   </Badge>
                                 </div>
 
-                                {/* Save button on image */}
-                                {user && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      toggleSaveProperty(match);
-                                    }}
-                                    disabled={savingPropertyId === match.id}
-                                    className={cn(
-                                      "absolute bottom-3 right-3 p-2 rounded-full shadow-lg transition-all",
-                                      savedPropertyIds.has(match.id)
-                                        ? "bg-white text-red-500"
-                                        : "bg-white/90 text-slate-500 hover:text-red-500",
-                                    )}
-                                    title={
-                                      savedPropertyIds.has(match.id)
-                                        ? "Quitar de guardados"
-                                        : "Guardar propiedad"
-                                    }
-                                  >
-                                    {savingPropertyId === match.id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Heart
-                                        className={cn(
-                                          "h-4 w-4",
-                                          savedPropertyIds.has(match.id) &&
-                                            "fill-current",
-                                        )}
-                                      />
-                                    )}
-                                  </button>
-                                )}
+                                {/* Save button on image - always visible, prompts login if not authenticated */}
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    toggleSaveProperty(match);
+                                  }}
+                                  disabled={savingPropertyId === match.id}
+                                  className={cn(
+                                    "absolute bottom-3 right-3 p-2 rounded-full shadow-lg transition-all",
+                                    savedPropertyIds.has(match.id)
+                                      ? "bg-white text-red-500"
+                                      : "bg-white/90 text-slate-500 hover:text-red-500",
+                                  )}
+                                  title={
+                                    savedPropertyIds.has(match.id)
+                                      ? "Quitar de guardados"
+                                      : "Guardar propiedad"
+                                  }
+                                >
+                                  {savingPropertyId === match.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Heart
+                                      className={cn(
+                                        "h-4 w-4",
+                                        savedPropertyIds.has(match.id) &&
+                                          "fill-current",
+                                      )}
+                                    />
+                                  )}
+                                </button>
                               </div>
 
                               {/* Content Section */}
@@ -1114,12 +1117,19 @@ export default function BuscarPage() {
                                     {match.title}
                                   </h3>
                                   <Badge
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setMatchScoreProperty(match);
+                                      setShowMatchScoreModal(true);
+                                    }}
                                     className={cn(
-                                      "shrink-0 text-xs",
+                                      "shrink-0 text-xs cursor-pointer hover:scale-105 transition-transform",
                                       isFeatured
-                                        ? "bg-amber-100 text-amber-700 border-amber-200"
-                                        : "bg-emerald-100 text-emerald-700 border-emerald-200",
+                                        ? "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200"
+                                        : "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200",
                                     )}
+                                    title="Ver detalles del match"
                                   >
                                     {match.matchScore}%
                                   </Badge>
@@ -1362,6 +1372,31 @@ export default function BuscarPage() {
             )}
           </AnimatePresence>
         </main>
+
+        {/* Login Prompt Modal - shown when unauthenticated user tries to save */}
+        <LoginPromptModal
+          isOpen={showLoginModal}
+          onClose={() => {
+            setShowLoginModal(false);
+            setLoginModalProperty(null);
+          }}
+          returnTo="/buscar"
+          propertyTitle={loginModalProperty?.title}
+        />
+
+        {/* Match Score Modal - shows detailed match information */}
+        <MatchScoreModal
+          isOpen={showMatchScoreModal}
+          onClose={() => {
+            setShowMatchScoreModal(false);
+            setMatchScoreProperty(null);
+          }}
+          propertyTitle={matchScoreProperty?.title || ""}
+          matchScore={matchScoreProperty?.matchScore || 0}
+          matchReasons={matchScoreProperty?.matchReasons || []}
+          price={matchScoreProperty?.price}
+          city={matchScoreProperty?.city}
+        />
       </div>
     </PageGuard>
   );

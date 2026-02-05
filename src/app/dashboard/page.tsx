@@ -25,7 +25,9 @@ import {
   DollarSign,
   Trash2,
   ExternalLink,
+  Info,
 } from 'lucide-react'
+import { MatchScoreModal } from '@/components/search/MatchScoreModal'
 
 interface SavedProperty {
   id: string
@@ -42,6 +44,7 @@ interface SavedProperty {
     squareFeet: number
     images?: string[]
     matchScore?: number
+    matchReasons?: string[]
   }
   saved_at: string
 }
@@ -54,6 +57,7 @@ export default function DashboardPage() {
   const [savedProperties, setSavedProperties] = useState<SavedProperty[]>([])
   const [loadingSaved, setLoadingSaved] = useState(true)
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [selectedPropertyForScore, setSelectedPropertyForScore] = useState<SavedProperty['property_data'] | null>(null)
   
   // Use ref to track if initial load is done - persists across re-renders without causing them
   const initialLoadDoneRef = useRef(false)
@@ -312,11 +316,40 @@ export default function DashboardPage() {
                                 </p>
                               </div>
                               {property.matchScore && (
-                                <Badge className="bg-slate-900 text-white shrink-0">
+                                <Badge 
+                                  className="bg-slate-900 text-white shrink-0 cursor-pointer hover:bg-slate-700 transition-colors flex items-center gap-1"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedPropertyForScore(property)
+                                  }}
+                                >
+                                  <Sparkles className="h-3 w-3" />
                                   {property.matchScore}%
+                                  <Info className="h-3 w-3 ml-0.5" />
                                 </Badge>
                               )}
                             </div>
+                            
+                            {/* Match Reasons Preview */}
+                            {property.matchReasons && property.matchReasons.length > 0 && (
+                              <div 
+                                className="mt-2 p-2 bg-slate-50 rounded-md cursor-pointer hover:bg-slate-100 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedPropertyForScore(property)
+                                }}
+                              >
+                                <p className="text-xs text-slate-600 line-clamp-2">
+                                  {property.matchReasons[0]}
+                                </p>
+                                {property.matchReasons.length > 1 && (
+                                  <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                                    <Info className="h-3 w-3" />
+                                    Ver {property.matchReasons.length - 1} razón(es) más
+                                  </p>
+                                )}
+                              </div>
+                            )}
                             
                             {/* Stats */}
                             <div className="flex items-center gap-4 mt-2 text-xs text-slate-600">
@@ -422,6 +455,19 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
+      
+      {/* Match Score Modal */}
+      {selectedPropertyForScore && (
+        <MatchScoreModal
+          isOpen={!!selectedPropertyForScore}
+          onClose={() => setSelectedPropertyForScore(null)}
+          propertyTitle={selectedPropertyForScore.title}
+          matchScore={selectedPropertyForScore.matchScore || 0}
+          matchReasons={selectedPropertyForScore.matchReasons || []}
+          price={selectedPropertyForScore.price}
+          city={selectedPropertyForScore.city}
+        />
+      )}
     </div>
   )
 }

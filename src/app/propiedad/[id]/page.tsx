@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { LoginPromptModal } from "@/components/auth/LoginPromptModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,7 +30,11 @@ import {
   Loader2,
   Check,
   Phone,
+  Sparkles,
+  CheckCircle,
+  Target,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 // Broker info - TODO: Make configurable from admin
@@ -82,6 +88,7 @@ interface PropertyDetail {
 export default function PropertyDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const [property, setProperty] = useState<PropertyDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +97,7 @@ export default function PropertyDetailPage() {
   const [copied, setCopied] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -187,6 +195,12 @@ export default function PropertyDetailPage() {
   const toggleSaveProperty = async () => {
     if (!property) return;
 
+    // Show login modal if user is not authenticated
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+
     setIsSaving(true);
     try {
       if (isSaved) {
@@ -225,6 +239,9 @@ export default function PropertyDetailPage() {
               features: property.features,
               amenities: property.amenities,
               images: property.images,
+              // AI match data
+              matchScore: property.matchScore,
+              matchReasons: property.matchReasons,
             },
           }),
         });
@@ -623,6 +640,75 @@ export default function PropertyDetailPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Match Score Section - Only shown if matchScore is available */}
+            {property.matchScore !== undefined && property.matchScore > 0 && (
+              <Card className="shadow-sm border-2 border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-teal-50/50">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <Target className="h-5 w-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-900">
+                          Match Score
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Compatibilidad con tu búsqueda
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-3xl font-bold text-emerald-600">
+                        {property.matchScore}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="space-y-1">
+                    <Progress value={property.matchScore} className="h-2" />
+                    <p className="text-xs text-slate-500 text-right">
+                      {property.matchScore >= 90
+                        ? "Excelente match"
+                        : property.matchScore >= 75
+                        ? "Muy buen match"
+                        : property.matchScore >= 60
+                        ? "Buen match"
+                        : "Match regular"}
+                    </p>
+                  </div>
+
+                  {/* Match Reasons */}
+                  {property.matchReasons && property.matchReasons.length > 0 && (
+                    <div className="space-y-3 pt-2">
+                      <h4 className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                        <Sparkles className="h-4 w-4 text-amber-500" />
+                        Por qué encaja contigo
+                      </h4>
+                      <ul className="space-y-2">
+                        {property.matchReasons.map((reason, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-2 text-sm text-slate-600"
+                          >
+                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                            <span>{reason}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Explanation */}
+                  <div className="bg-white/60 rounded-lg p-3 text-xs text-slate-500 mt-2">
+                    Este puntaje refleja qué tan bien esta propiedad se alinea
+                    con las preferencias que describiste en tu búsqueda.
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Right Column - Contact Card */}
@@ -861,6 +947,14 @@ export default function PropertyDetailPage() {
 
       {/* Padding for mobile sticky CTA */}
       <div className="lg:hidden h-20" />
+
+      {/* Login Prompt Modal - shown when unauthenticated user tries to save */}
+      <LoginPromptModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        returnTo={`/propiedad/${params.id}`}
+        propertyTitle={property?.title}
+      />
     </div>
   );
 }

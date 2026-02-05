@@ -12,7 +12,19 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
 
     const body = await request.json()
-    const { idealLifeDescription, priorities, budget, location, preferredPropertyTypes, propertyType, listingType } = body
+    const { 
+      idealLifeDescription, 
+      priorities, 
+      budget, 
+      location, 
+      preferredPropertyTypes, 
+      propertyType, 
+      listingType,
+      // Contextual fields for enriched matching
+      purpose,
+      timeline,
+      mainPriority,
+    } = body
 
     if (!idealLifeDescription) {
       return NextResponse.json(
@@ -192,7 +204,17 @@ export async function POST(request: NextRequest) {
       
       // Match properties with profile using AI
       const matchResult = await matchPropertiesWithProfile(
-        { idealLifeDescription, priorities: priorities || '', budget, location, preferredPropertyTypes },
+        { 
+          idealLifeDescription, 
+          priorities: priorities || '', 
+          budget, 
+          location, 
+          preferredPropertyTypes,
+          // Contextual fields for enriched matching
+          purpose,
+          timeline,
+          mainPriority,
+        },
         propertiesForAI.map((p) => ({
           id: p.id,
           title: p.title,
@@ -205,6 +227,10 @@ export async function POST(request: NextRequest) {
           bedrooms: p.details.bedrooms || undefined,
           bathrooms: p.details.bathrooms || undefined,
           squareFeet: p.details.squareFeet || undefined,
+          // Contextual data for enriched matching
+          coordinates: p.coordinates || undefined,
+          neighborhood: p.address.neighborhood || undefined,
+          yearBuilt: p.details.yearBuilt || undefined,
         }))
       )
 

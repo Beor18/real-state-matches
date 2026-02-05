@@ -9,6 +9,10 @@ export interface LifestyleMatchProfile {
   budget?: number
   location?: string
   preferredPropertyTypes?: string[]
+  // Contextual fields for enriched matching
+  purpose?: 'vivir' | 'retiro' | 'invertir' | 'negocio' | 'no_seguro'
+  timeline?: 'inmediato' | 'pronto' | 'explorando'
+  mainPriority?: 'tranquilidad' | 'social' | 'crecimiento' | 'estabilidad' | 'flexibilidad'
 }
 
 export interface ViralContentRequest {
@@ -36,6 +40,11 @@ export interface PropertyData {
   bedrooms?: number
   bathrooms?: number
   squareFeet?: number
+  // Contextual fields for enriched matching
+  coordinates?: { latitude: number; longitude: number }
+  neighborhood?: string
+  mapArea?: string
+  yearBuilt?: number
 }
 
 // Suggested location extracted from lifestyle analysis
@@ -171,6 +180,114 @@ Ejemplos:
   }
 }
 
+// Helper function to get purpose label in Spanish
+function getPurposeLabel(purpose?: string): string {
+  const labels: Record<string, string> = {
+    'vivir': 'Vivir / Residencia principal',
+    'retiro': 'Retiro / Jubilación',
+    'invertir': 'Inversión inmobiliaria',
+    'negocio': 'Establecer un negocio',
+    'no_seguro': 'Explorando opciones',
+  }
+  return labels[purpose || ''] || 'No especificado'
+}
+
+// Helper function to get priority label in Spanish
+function getPriorityLabel(priority?: string): string {
+  const labels: Record<string, string> = {
+    'tranquilidad': 'Tranquilidad y paz',
+    'social': 'Cercanía y vida social',
+    'crecimiento': 'Oportunidad de crecimiento',
+    'estabilidad': 'Estabilidad a largo plazo',
+    'flexibilidad': 'Flexibilidad',
+  }
+  return labels[priority || ''] || 'No especificada'
+}
+
+// Helper function to get timeline label in Spanish
+function getTimelineLabel(timeline?: string): string {
+  const labels: Record<string, string> = {
+    'inmediato': 'Inmediato (0-3 meses)',
+    'pronto': 'Pronto (3-6 meses)',
+    'explorando': 'Explorando (6+ meses)',
+  }
+  return labels[timeline || ''] || 'No especificado'
+}
+
+// Helper function to get contextual instructions based on purpose and priority
+function getContextualInstructions(purpose?: string, priority?: string): string {
+  const instructions: string[] = []
+
+  // Instructions based on purpose
+  if (purpose === 'invertir') {
+    instructions.push(`
+INSTRUCCIONES PARA INVERSIÓN:
+- Menciona el potencial de valorización del área
+- Indica si es zona con alta demanda de alquiler (turístico o largo plazo)
+- Menciona si hay desarrollos o proyectos cercanos que aumenten valor
+- Indica si el precio por pie cuadrado es competitivo para el área
+- Evalúa el ROI potencial basado en alquileres del mercado`)
+  }
+
+  if (purpose === 'vivir' || purpose === 'retiro') {
+    instructions.push(`
+INSTRUCCIONES PARA RESIDENCIA:
+- Evalúa la tranquilidad y seguridad del área
+- Menciona si es comunidad cerrada (gated community)
+- Si hay riesgos conocidos (zonas inundables, ruido, tráfico), mencionarlos claramente
+- Evalúa acceso a servicios médicos si es para retiro`)
+  }
+
+  if (purpose === 'negocio') {
+    instructions.push(`
+INSTRUCCIONES PARA NEGOCIO:
+- Evalúa el flujo de tráfico y visibilidad comercial
+- Menciona cercanía a centros comerciales o zonas de alto tráfico
+- Indica si la zona es comercial o residencial`)
+  }
+
+  // Instructions based on priority
+  if (priority === 'social') {
+    instructions.push(`
+INSTRUCCIONES PARA CERCANÍA SOCIAL:
+- Menciona cercanías ESPECÍFICAS con nombres:
+  * Escuelas cercanas (ej: "Cerca del Colegio San Ignacio", "A 10 min del Colegio Nuestra Señora")
+  * Centros comerciales (ej: "A 5 min de Plaza Las Américas", "Cerca de Plaza Carolina")
+  * Supermercados (ej: "Walmart a 3 min", "Pueblo Supermarket cercano")
+  * Hospitales (ej: "Hospital Auxilio Mutuo a 10 min")
+  * Restaurantes y vida nocturna si aplica`)
+  }
+
+  if (priority === 'tranquilidad') {
+    instructions.push(`
+INSTRUCCIONES PARA TRANQUILIDAD:
+- Evalúa si es zona residencial tranquila
+- Menciona si hay comunidad cerrada (gated)
+- Indica distancia de zonas ruidosas o comerciales
+- Evalúa privacidad y densidad de vecinos`)
+  }
+
+  if (priority === 'crecimiento') {
+    instructions.push(`
+INSTRUCCIONES PARA CRECIMIENTO:
+- Evalúa proyección de valorización del área
+- Menciona desarrollos urbanos o proyectos planificados
+- Indica tendencia de precios en la zona`)
+  }
+
+  // Always include Puerto Rico context
+  instructions.push(`
+INFORMACIÓN CONTEXTUAL DE PUERTO RICO (usar si aplica):
+- Zonas conocidas por riesgo de inundación: Loíza, partes bajas de Carolina, Río Piedras bajo, Cataño, Caimito
+- Zonas premium/alto valor: Condado, Ocean Park, Dorado Beach, Palmas del Mar, Guaynabo
+- Zonas con alta demanda turística: Isla Verde, Condado, Rincón, Vieques, Culebra
+- Zonas familiares tranquilas: Guaynabo, Trujillo Alto, Caguas
+- Si la propiedad está en zona con riesgo de inundación conocido, SIEMPRE mencionarlo
+- Menciona escuelas, centros comerciales u hospitales cercanos si conoces la zona`)
+
+  return instructions.join('\n')
+}
+
 // Property Matching Service
 export async function matchPropertiesWithProfile(
   profile: LifestyleMatchProfile,
@@ -183,29 +300,47 @@ export async function matchPropertiesWithProfile(
     lifestyleFit: 'excellent' | 'good' | 'fair' | 'poor'
   }>
 }> {
+  // Get contextual labels and instructions
+  const purposeLabel = getPurposeLabel(profile.purpose)
+  const priorityLabel = getPriorityLabel(profile.mainPriority)
+  const timelineLabel = getTimelineLabel(profile.timeline)
+  const contextualInstructions = getContextualInstructions(profile.purpose, profile.mainPriority)
+
   const prompt = `
 Analiza la compatibilidad entre este perfil de usuario y las siguientes propiedades.
 
 PERFIL DEL USUARIO:
 - Vida ideal: "${profile.idealLifeDescription}"
-- Prioridades: ${profile.priorities}
+- Propósito: ${purposeLabel}
+- Prioridad principal: ${priorityLabel}
+- Timeline de compra: ${timelineLabel}
+- Prioridades adicionales: ${profile.priorities || 'No especificadas'}
 - Presupuesto: ${profile.budget ? `$${profile.budget.toLocaleString('en-US')}` : 'Flexible'}
-- Ubicación: ${profile.location || 'Cualquiera'}
+- Ubicación preferida: ${profile.location || 'Cualquiera en Puerto Rico'}
+
+${contextualInstructions}
 
 PROPIEDADES DISPONIBLES:
 ${properties.map((p, i) => `
 ${i + 1}. ID: ${p.id}
    - Título: ${p.title}
-   - Ubicación: ${p.address}, ${p.city}
+   - Ubicación: ${p.address}, ${p.city}${p.neighborhood ? `, ${p.neighborhood}` : ''}
    - Precio: $${p.price.toLocaleString('en-US')}
    - Habitaciones: ${p.bedrooms || 'N/A'}, Baños: ${p.bathrooms || 'N/A'}
-   - Amenidades: ${p.amenities.slice(0, 5).join(', ')}
-   - Descripción: ${p.description.slice(0, 200)}...
+   - Pies cuadrados: ${p.squareFeet || 'N/A'}
+   - Año construcción: ${p.yearBuilt || 'N/A'}
+   - Amenidades: ${p.amenities.slice(0, 8).join(', ')}
+   - Descripción: ${p.description.slice(0, 300)}...
 `).join('\n')}
 
-Para cada propiedad, evalúa:
-1. matchScore (0-100): Qué tan bien se adapta al estilo de vida del usuario
-2. matchReasons: 3-5 razones específicas por las que esta propiedad es buena para este usuario
+INSTRUCCIONES DE EVALUACIÓN:
+1. matchScore (0-100): Qué tan bien se adapta al estilo de vida Y propósito del usuario
+2. matchReasons: 4-6 razones ESPECÍFICAS y CONTEXTUALES:
+   - Sé específico: menciona nombres de lugares, distancias, características concretas
+   - Si es para inversión, menciona datos de ROI o demanda
+   - Si es para vivir, menciona calidad de vida y cercanías
+   - Si hay riesgos (inundación, ruido), mencionarlos como advertencia
+   - Incluye al menos una razón sobre la ubicación/vecindario
 3. lifestyleFit: "excellent" (90+), "good" (70-89), "fair" (50-69), "poor" (<50)
 
 Responde en formato JSON:
@@ -214,7 +349,7 @@ Responde en formato JSON:
     {
       "propertyId": "id",
       "matchScore": 95,
-      "matchReasons": ["razón 1", "razón 2", ...],
+      "matchReasons": ["razón específica 1", "razón específica 2", ...],
       "lifestyleFit": "excellent"
     }
   ]
