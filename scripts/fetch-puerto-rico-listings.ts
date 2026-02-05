@@ -60,7 +60,8 @@ const COLUMNS = [
   'bedrooms',
   'bathrooms',
   'parking_spaces',
-  'price_sold'
+  'price_sold',
+  'listing_agent'
 ].join(',')
 
 function getHeaders(): Record<string, string> {

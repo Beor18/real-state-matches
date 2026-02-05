@@ -33,6 +33,7 @@ import {
   Sparkles,
   CheckCircle,
   Target,
+  User,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -83,6 +84,13 @@ interface PropertyDetail {
   // Match data (from search)
   matchScore?: number;
   matchReasons?: string[];
+  // Listing agent data
+  agent?: {
+    name: string;
+    phone?: string;
+    email?: string;
+    company?: string;
+  };
 }
 
 export default function PropertyDetailPage() {
@@ -146,6 +154,8 @@ export default function PropertyDetailPage() {
           // Include match data if available
           matchScore: parsed.matchScore,
           matchReasons: parsed.matchReasons,
+          // Include listing agent data
+          agent: parsed.agent,
         };
         setProperty(propertyFromCache);
         setLoading(false);
@@ -242,6 +252,8 @@ export default function PropertyDetailPage() {
               // AI match data
               matchScore: property.matchScore,
               matchReasons: property.matchReasons,
+              // Listing agent data
+              agent: property.agent,
             },
           }),
         });
@@ -640,6 +652,36 @@ export default function PropertyDetailPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Listing Agent Section - Always shown */}
+            <Card className="shadow-sm border border-slate-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                    <User className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-500 uppercase tracking-wide">
+                      Agente del Listado
+                    </p>
+                    <p className="font-semibold text-slate-900 truncate">
+                      {property.agent?.name || "No disponible"}
+                    </p>
+                    {property.agent?.phone && (
+                      <p className="text-sm text-slate-600 flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {property.agent.phone}
+                      </p>
+                    )}
+                    {property.agent?.company && (
+                      <p className="text-xs text-slate-500">
+                        {property.agent.company}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Match Score Section - Only shown if matchScore is available */}
             {property.matchScore !== undefined && property.matchScore > 0 && (

@@ -20,6 +20,19 @@ import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
+// Xposure listing agent format
+interface XposureListingAgent {
+  name?: string;
+  phone?: string;
+  email?: string;
+  company?: string;
+  // Alternative field names from API
+  agent_name?: string;
+  agent_phone?: string;
+  agent_email?: string;
+  office_name?: string;
+}
+
 // Xposure property format from JSON
 interface XposureProperty {
   id: string;
@@ -58,6 +71,8 @@ interface XposureProperty {
   occurance: string;
   seq: number;
   key: string;
+  // Listing agent data
+  listing_agent?: XposureListingAgent | string;
 }
 
 // Database property format for insert
@@ -165,6 +180,42 @@ function mapStatus(status: string): string {
   return statusMap[status?.toLowerCase()] || "active";
 }
 
+// Parse listing agent data from various formats
+function parseListingAgent(listingAgent: XposureListingAgent | string | undefined): {
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  company: string | null;
+} {
+  if (!listingAgent) {
+    return { name: null, phone: null, email: null, company: null };
+  }
+
+  // If it's a string, try to parse as JSON or use as name
+  if (typeof listingAgent === "string") {
+    try {
+      const parsed = JSON.parse(listingAgent);
+      return parseListingAgent(parsed);
+    } catch {
+      // If it's just a string, use it as the agent name
+      return { name: decodeHtml(listingAgent), phone: null, email: null, company: null };
+    }
+  }
+
+  // Extract agent data from object
+  const name = listingAgent.name || listingAgent.agent_name || null;
+  const phone = listingAgent.phone || listingAgent.agent_phone || null;
+  const email = listingAgent.email || listingAgent.agent_email || null;
+  const company = listingAgent.company || listingAgent.office_name || null;
+
+  return {
+    name: name ? decodeHtml(name) : null,
+    phone: phone ? phone.toString() : null,
+    email: email ? email.toString() : null,
+    company: company ? decodeHtml(company) : null,
+  };
+}
+
 // Generate photo gallery URLs from Xposure UID and photo count
 // Photos follow the pattern: https://images.realtyserver.com/photo_server.php?btnSubmit=GetPhoto&board=puerto_rico&name={uid}.L{number}
 // Where number goes from 01 to pcount (L01, L02, L03... L10, L11, etc.)
@@ -251,6 +302,9 @@ function transformToDatabase(
     images.push(fullSizeUrl);
   }
 
+  // Parse listing agent data
+  const agent = parseListingAgent(xposure.listing_agent);
+
   return {
     mls_id: `xposure-${xposure.id}`,
     idx_source: "xposure",
@@ -273,10 +327,10 @@ function transformToDatabase(
     amenities,
     features,
     images,
-    agent_name: null,
-    agent_email: null,
-    agent_phone: null,
-    agent_company: null,
+    agent_name: agent.name,
+    agent_email: agent.email,
+    agent_phone: agent.phone,
+    agent_company: agent.company,
     latitude: xposure.lat || null,
     longitude: xposure.lng || null,
     status: mapStatus(xposure.status),

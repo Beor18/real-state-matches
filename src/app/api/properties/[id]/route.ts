@@ -51,7 +51,7 @@ export async function GET(
         .single()
 
       if (!error && property) {
-        // Transform to normalized format (excluding agent info for business model)
+        // Transform to normalized format including agent info
         const normalizedProperty = {
           id: `${property.idx_source}-${property.mls_id}`,
           sourceProvider: property.idx_source,
@@ -90,6 +90,13 @@ export async function GET(
           modifiedDate: property.updated_at,
           status: property.status,
           featured: property.featured,
+          // Listing agent info
+          agent: property.agent_name ? {
+            name: property.agent_name,
+            phone: property.agent_phone || undefined,
+            email: property.agent_email || undefined,
+            company: property.agent_company || undefined,
+          } : undefined,
         }
 
         return NextResponse.json({

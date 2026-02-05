@@ -48,6 +48,7 @@ import {
   Palmtree,
   TrendingUp,
   Users,
+  User,
   Shield,
   Shuffle,
   HelpCircle,
@@ -56,6 +57,7 @@ import {
   Building2,
   LandPlot,
   ShoppingBag,
+  Phone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -73,6 +75,12 @@ interface PropertyMatch {
   amenities: string[];
   images?: string[];
   sourceProvider?: string;
+  agent?: {
+    name: string;
+    phone?: string;
+    email?: string;
+    company?: string;
+  };
 }
 
 interface SearchError {
@@ -149,9 +157,11 @@ export default function BuscarPage() {
   );
   const [savingPropertyId, setSavingPropertyId] = useState<string | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [loginModalProperty, setLoginModalProperty] = useState<PropertyMatch | null>(null);
+  const [loginModalProperty, setLoginModalProperty] =
+    useState<PropertyMatch | null>(null);
   const [showMatchScoreModal, setShowMatchScoreModal] = useState(false);
-  const [matchScoreProperty, setMatchScoreProperty] = useState<PropertyMatch | null>(null);
+  const [matchScoreProperty, setMatchScoreProperty] =
+    useState<PropertyMatch | null>(null);
 
   // Restore search state from sessionStorage if returning from property detail
   useEffect(() => {
@@ -251,6 +261,8 @@ export default function BuscarPage() {
               images: match.images || [],
               matchScore: match.matchScore,
               matchReasons: match.matchReasons,
+              // Listing agent data
+              agent: match.agent,
             },
           }),
         });
@@ -294,6 +306,7 @@ export default function BuscarPage() {
       images: match.images || [],
       matchScore: match.matchScore,
       matchReasons: match.matchReasons,
+      agent: match.agent,
     };
     sessionStorage.setItem(
       `property_${match.id}`,
@@ -343,6 +356,7 @@ export default function BuscarPage() {
           amenities: Array.isArray(match.amenities) ? match.amenities : [],
           images: match.images || [],
           sourceProvider: match.sourceProvider,
+          agent: match.agent,
         }));
         setMatches(transformedMatches);
         setProvidersQueried(data.providers?.providersQueried || []);
@@ -448,345 +462,349 @@ export default function BuscarPage() {
                   <div className="max-w-2xl mx-auto px-6">
                     {/* Form is now public - no login required to search */}
                     <Card className="border-0 shadow-lg bg-white overflow-visible">
-                        <CardContent className="p-6 md:p-8 overflow-visible">
-                          <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Lifestyle Description */}
+                      <CardContent className="p-6 md:p-8 overflow-visible">
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                          {/* Lifestyle Description */}
+                          <div className="space-y-2">
+                            <Label
+                              htmlFor="lifestyle"
+                              className="text-base font-medium"
+                            >
+                              ¿Cómo imaginas tu vida ideal? *
+                            </Label>
+                            <Textarea
+                              id="lifestyle"
+                              placeholder="Ej: Me imagino despertar cerca del mar, caminar a cafeterías locales, trabajar remoto con buena conexión, y tener espacio para recibir familia los fines de semana..."
+                              value={answers.lifestyle}
+                              onChange={(e) =>
+                                setAnswers({
+                                  ...answers,
+                                  lifestyle: e.target.value,
+                                })
+                              }
+                              className="min-h-32 resize-none"
+                              required
+                            />
+                            <p className="text-xs text-slate-500">
+                              Mientras más detalles nos des, mejores serán los
+                              resultados
+                            </p>
+                          </div>
+
+                          {/* Location Preferences */}
+                          <div
+                            className="space-y-2"
+                            style={{
+                              overflow: "visible",
+                              position: "relative",
+                              zIndex: 50,
+                            }}
+                          >
+                            <Label
+                              htmlFor="location"
+                              className="text-base font-medium"
+                            >
+                              ¿Tienes preferencia de zona? (opcional)
+                            </Label>
+                            <LocationAutocomplete
+                              value={answers.location}
+                              onChange={(value) =>
+                                setAnswers({
+                                  ...answers,
+                                  location: value,
+                                })
+                              }
+                              placeholder="Buscar ciudad o barrio en Puerto Rico..."
+                            />
+                          </div>
+
+                          {/* Budget */}
+                          <div className="space-y-3">
+                            <Label className="text-base font-medium">
+                              Presupuesto máximo
+                            </Label>
                             <div className="space-y-2">
-                              <Label
-                                htmlFor="lifestyle"
-                                className="text-base font-medium"
-                              >
-                                ¿Cómo imaginas tu vida ideal? *
-                              </Label>
-                              <Textarea
-                                id="lifestyle"
-                                placeholder="Ej: Me imagino despertar cerca del mar, caminar a cafeterías locales, trabajar remoto con buena conexión, y tener espacio para recibir familia los fines de semana..."
-                                value={answers.lifestyle}
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-slate-500">$30,000</span>
+                                <span className="font-semibold text-lg text-emerald-600">
+                                  $
+                                  {parseInt(answers.budget).toLocaleString(
+                                    "en-US",
+                                  )}
+                                </span>
+                                <span className="text-slate-500">
+                                  $2,000,000
+                                </span>
+                              </div>
+                              <Input
+                                type="range"
+                                min="30000"
+                                max="2000000"
+                                step="10000"
+                                value={answers.budget}
                                 onChange={(e) =>
                                   setAnswers({
                                     ...answers,
-                                    lifestyle: e.target.value,
+                                    budget: e.target.value,
                                   })
                                 }
-                                className="min-h-32 resize-none"
-                                required
-                              />
-                              <p className="text-xs text-slate-500">
-                                Mientras más detalles nos des, mejores serán los
-                                resultados
-                              </p>
-                            </div>
-
-                            {/* Location Preferences */}
-                            <div className="space-y-2" style={{ overflow: 'visible', position: 'relative', zIndex: 50 }}>
-                              <Label
-                                htmlFor="location"
-                                className="text-base font-medium"
-                              >
-                                ¿Tienes preferencia de zona? (opcional)
-                              </Label>
-                              <LocationAutocomplete
-                                value={answers.location}
-                                onChange={(value) =>
-                                  setAnswers({
-                                    ...answers,
-                                    location: value,
-                                  })
-                                }
-                                placeholder="Buscar ciudad o barrio en Puerto Rico..."
+                                className="w-full accent-emerald-600"
                               />
                             </div>
+                          </div>
 
-                            {/* Budget */}
-                            <div className="space-y-3">
-                              <Label className="text-base font-medium">
-                                Presupuesto máximo
-                              </Label>
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between text-sm">
-                                  <span className="text-slate-500">
-                                    $30,000
-                                  </span>
-                                  <span className="font-semibold text-lg text-emerald-600">
-                                    $
-                                    {parseInt(answers.budget).toLocaleString(
-                                      "en-US",
-                                    )}
-                                  </span>
-                                  <span className="text-slate-500">
-                                    $2,000,000
-                                  </span>
-                                </div>
-                                <Input
-                                  type="range"
-                                  min="30000"
-                                  max="2000000"
-                                  step="10000"
-                                  value={answers.budget}
-                                  onChange={(e) =>
-                                    setAnswers({
-                                      ...answers,
-                                      budget: e.target.value,
-                                    })
-                                  }
-                                  className="w-full accent-emerald-600"
-                                />
-                              </div>
-                            </div>
-
-                            {/* Purpose */}
-                            <div className="space-y-3">
-                              <Label className="text-base font-medium">
-                                ¿Cuál es el objetivo principal de esta búsqueda?
-                                *
-                              </Label>
-                              <RadioGroup
-                                value={answers.purpose}
-                                onValueChange={(value) =>
-                                  setAnswers({ ...answers, purpose: value })
-                                }
-                                className="grid grid-cols-2 sm:grid-cols-3 gap-3"
-                              >
-                                {PURPOSE_OPTIONS.map((option) => {
-                                  const Icon = option.icon;
-                                  return (
-                                    <Label
-                                      key={option.value}
-                                      htmlFor={`purpose-${option.value}`}
-                                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                                        answers.purpose === option.value
-                                          ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                                      }`}
-                                    >
-                                      <RadioGroupItem
-                                        value={option.value}
-                                        id={`purpose-${option.value}`}
-                                        className="sr-only"
-                                      />
-                                      <Icon
-                                        className={`h-6 w-6 ${
-                                          answers.purpose === option.value
-                                            ? "text-emerald-600"
-                                            : "text-slate-400"
-                                        }`}
-                                      />
-                                      <span className="text-sm font-medium text-center">
-                                        {option.label}
-                                      </span>
-                                    </Label>
-                                  );
-                                })}
-                              </RadioGroup>
-                            </div>
-
-                            {/* Timeline */}
-                            <div className="space-y-3">
-                              <Label className="text-base font-medium">
-                                ¿Cuándo te gustaría tomar esta decisión?
-                              </Label>
-                              <RadioGroup
-                                value={answers.timeline}
-                                onValueChange={(value) =>
-                                  setAnswers({ ...answers, timeline: value })
-                                }
-                                className="grid grid-cols-3 gap-3"
-                              >
-                                {TIMELINE_OPTIONS.map((option) => (
+                          {/* Purpose */}
+                          <div className="space-y-3">
+                            <Label className="text-base font-medium">
+                              ¿Cuál es el objetivo principal de esta búsqueda? *
+                            </Label>
+                            <RadioGroup
+                              value={answers.purpose}
+                              onValueChange={(value) =>
+                                setAnswers({ ...answers, purpose: value })
+                              }
+                              className="grid grid-cols-2 sm:grid-cols-3 gap-3"
+                            >
+                              {PURPOSE_OPTIONS.map((option) => {
+                                const Icon = option.icon;
+                                return (
                                   <Label
                                     key={option.value}
-                                    htmlFor={`timeline-${option.value}`}
-                                    className={`flex flex-col items-center gap-1 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                                      answers.timeline === option.value
+                                    htmlFor={`purpose-${option.value}`}
+                                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                      answers.purpose === option.value
                                         ? "border-emerald-500 bg-emerald-50 text-emerald-700"
                                         : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                                     }`}
                                   >
                                     <RadioGroupItem
                                       value={option.value}
-                                      id={`timeline-${option.value}`}
+                                      id={`purpose-${option.value}`}
                                       className="sr-only"
                                     />
-                                    <Clock
-                                      className={`h-5 w-5 ${
-                                        answers.timeline === option.value
+                                    <Icon
+                                      className={`h-6 w-6 ${
+                                        answers.purpose === option.value
                                           ? "text-emerald-600"
                                           : "text-slate-400"
                                       }`}
                                     />
-                                    <span className="text-sm font-medium">
+                                    <span className="text-sm font-medium text-center">
                                       {option.label}
                                     </span>
-                                    <span className="text-xs text-slate-500">
-                                      {option.description}
+                                  </Label>
+                                );
+                              })}
+                            </RadioGroup>
+                          </div>
+
+                          {/* Timeline */}
+                          <div className="space-y-3">
+                            <Label className="text-base font-medium">
+                              ¿Cuándo te gustaría tomar esta decisión?
+                            </Label>
+                            <RadioGroup
+                              value={answers.timeline}
+                              onValueChange={(value) =>
+                                setAnswers({ ...answers, timeline: value })
+                              }
+                              className="grid grid-cols-3 gap-3"
+                            >
+                              {TIMELINE_OPTIONS.map((option) => (
+                                <Label
+                                  key={option.value}
+                                  htmlFor={`timeline-${option.value}`}
+                                  className={`flex flex-col items-center gap-1 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                    answers.timeline === option.value
+                                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                      : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  <RadioGroupItem
+                                    value={option.value}
+                                    id={`timeline-${option.value}`}
+                                    className="sr-only"
+                                  />
+                                  <Clock
+                                    className={`h-5 w-5 ${
+                                      answers.timeline === option.value
+                                        ? "text-emerald-600"
+                                        : "text-slate-400"
+                                    }`}
+                                  />
+                                  <span className="text-sm font-medium">
+                                    {option.label}
+                                  </span>
+                                  <span className="text-xs text-slate-500">
+                                    {option.description}
+                                  </span>
+                                </Label>
+                              ))}
+                            </RadioGroup>
+                          </div>
+
+                          {/* Priority */}
+                          <div className="space-y-3">
+                            <Label className="text-base font-medium">
+                              ¿Qué es más importante para ti ahora mismo? *
+                            </Label>
+                            <RadioGroup
+                              value={answers.priority}
+                              onValueChange={(value) =>
+                                setAnswers({ ...answers, priority: value })
+                              }
+                              className="grid grid-cols-2 sm:grid-cols-3 gap-3"
+                            >
+                              {PRIORITY_OPTIONS.map((option) => {
+                                const Icon = option.icon;
+                                return (
+                                  <Label
+                                    key={option.value}
+                                    htmlFor={`priority-${option.value}`}
+                                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                      answers.priority === option.value
+                                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                                    }`}
+                                  >
+                                    <RadioGroupItem
+                                      value={option.value}
+                                      id={`priority-${option.value}`}
+                                      className="sr-only"
+                                    />
+                                    <Icon
+                                      className={`h-6 w-6 ${
+                                        answers.priority === option.value
+                                          ? "text-emerald-600"
+                                          : "text-slate-400"
+                                      }`}
+                                    />
+                                    <span className="text-sm font-medium text-center">
+                                      {option.label}
                                     </span>
                                   </Label>
-                                ))}
-                              </RadioGroup>
-                            </div>
+                                );
+                              })}
+                            </RadioGroup>
+                          </div>
 
-                            {/* Priority */}
-                            <div className="space-y-3">
-                              <Label className="text-base font-medium">
-                                ¿Qué es más importante para ti ahora mismo? *
-                              </Label>
-                              <RadioGroup
-                                value={answers.priority}
-                                onValueChange={(value) =>
-                                  setAnswers({ ...answers, priority: value })
-                                }
-                                className="grid grid-cols-2 sm:grid-cols-3 gap-3"
-                              >
-                                {PRIORITY_OPTIONS.map((option) => {
-                                  const Icon = option.icon;
-                                  return (
-                                    <Label
-                                      key={option.value}
-                                      htmlFor={`priority-${option.value}`}
-                                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                                        answers.priority === option.value
-                                          ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                                      }`}
-                                    >
-                                      <RadioGroupItem
-                                        value={option.value}
-                                        id={`priority-${option.value}`}
-                                        className="sr-only"
-                                      />
-                                      <Icon
-                                        className={`h-6 w-6 ${
-                                          answers.priority === option.value
-                                            ? "text-emerald-600"
-                                            : "text-slate-400"
-                                        }`}
-                                      />
-                                      <span className="text-sm font-medium text-center">
-                                        {option.label}
-                                      </span>
-                                    </Label>
-                                  );
-                                })}
-                              </RadioGroup>
-                            </div>
-
-                            {/* Property Type */}
-                            <div className="space-y-3">
-                              <Label className="text-base font-medium">
-                                Tipo de propiedad
-                              </Label>
-                              <RadioGroup
-                                value={answers.propertyType}
-                                onValueChange={(value) =>
-                                  setAnswers({
-                                    ...answers,
-                                    propertyType: value,
-                                  })
-                                }
-                                className="grid grid-cols-2 sm:grid-cols-3 gap-3"
-                              >
-                                {PROPERTY_TYPE_OPTIONS.map((option) => {
-                                  const Icon = option.icon;
-                                  return (
-                                    <Label
-                                      key={option.value}
-                                      htmlFor={`propertyType-${
-                                        option.value || "any"
-                                      }`}
-                                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                                        answers.propertyType === option.value
-                                          ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                                      }`}
-                                    >
-                                      <RadioGroupItem
-                                        value={option.value}
-                                        id={`propertyType-${
-                                          option.value || "any"
-                                        }`}
-                                        className="sr-only"
-                                      />
-                                      <Icon
-                                        className={`h-6 w-6 ${
-                                          answers.propertyType === option.value
-                                            ? "text-emerald-600"
-                                            : "text-slate-400"
-                                        }`}
-                                      />
-                                      <span className="text-sm font-medium text-center">
-                                        {option.label}
-                                      </span>
-                                    </Label>
-                                  );
-                                })}
-                              </RadioGroup>
-                            </div>
-
-                            {/* Listing Type */}
-                            <div className="space-y-3">
-                              <Label className="text-base font-medium">
-                                ¿Compra o alquiler?
-                              </Label>
-                              <RadioGroup
-                                value={answers.listingType}
-                                onValueChange={(value) =>
-                                  setAnswers({ ...answers, listingType: value })
-                                }
-                                className="grid grid-cols-3 gap-3"
-                              >
-                                {LISTING_TYPE_OPTIONS.map((option) => {
-                                  const Icon = option.icon;
-                                  return (
-                                    <Label
-                                      key={option.value}
-                                      htmlFor={`listingType-${
-                                        option.value || "any"
-                                      }`}
-                                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                                        answers.listingType === option.value
-                                          ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                                      }`}
-                                    >
-                                      <RadioGroupItem
-                                        value={option.value}
-                                        id={`listingType-${
-                                          option.value || "any"
-                                        }`}
-                                        className="sr-only"
-                                      />
-                                      <Icon
-                                        className={`h-6 w-6 ${
-                                          answers.listingType === option.value
-                                            ? "text-emerald-600"
-                                            : "text-slate-400"
-                                        }`}
-                                      />
-                                      <span className="text-sm font-medium text-center">
-                                        {option.label}
-                                      </span>
-                                    </Label>
-                                  );
-                                })}
-                              </RadioGroup>
-                            </div>
-
-                            <Button
-                              type="submit"
-                              size="lg"
-                              className="w-full gap-2 bg-slate-900 hover:bg-slate-800 h-14 text-base rounded-xl"
-                              disabled={
-                                !answers.lifestyle.trim() ||
-                                !answers.purpose ||
-                                !answers.priority
+                          {/* Property Type */}
+                          <div className="space-y-3">
+                            <Label className="text-base font-medium">
+                              Tipo de propiedad
+                            </Label>
+                            <RadioGroup
+                              value={answers.propertyType}
+                              onValueChange={(value) =>
+                                setAnswers({
+                                  ...answers,
+                                  propertyType: value,
+                                })
                               }
+                              className="grid grid-cols-2 sm:grid-cols-3 gap-3"
                             >
-                              <Search className="h-5 w-5" />
-                              Encontrar mi hogar ideal
-                            </Button>
-                          </form>
-                        </CardContent>
-                      </Card>
+                              {PROPERTY_TYPE_OPTIONS.map((option) => {
+                                const Icon = option.icon;
+                                return (
+                                  <Label
+                                    key={option.value}
+                                    htmlFor={`propertyType-${
+                                      option.value || "any"
+                                    }`}
+                                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                      answers.propertyType === option.value
+                                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                                    }`}
+                                  >
+                                    <RadioGroupItem
+                                      value={option.value}
+                                      id={`propertyType-${
+                                        option.value || "any"
+                                      }`}
+                                      className="sr-only"
+                                    />
+                                    <Icon
+                                      className={`h-6 w-6 ${
+                                        answers.propertyType === option.value
+                                          ? "text-emerald-600"
+                                          : "text-slate-400"
+                                      }`}
+                                    />
+                                    <span className="text-sm font-medium text-center">
+                                      {option.label}
+                                    </span>
+                                  </Label>
+                                );
+                              })}
+                            </RadioGroup>
+                          </div>
+
+                          {/* Listing Type */}
+                          <div className="space-y-3">
+                            <Label className="text-base font-medium">
+                              ¿Compra o alquiler?
+                            </Label>
+                            <RadioGroup
+                              value={answers.listingType}
+                              onValueChange={(value) =>
+                                setAnswers({ ...answers, listingType: value })
+                              }
+                              className="grid grid-cols-3 gap-3"
+                            >
+                              {LISTING_TYPE_OPTIONS.map((option) => {
+                                const Icon = option.icon;
+                                return (
+                                  <Label
+                                    key={option.value}
+                                    htmlFor={`listingType-${
+                                      option.value || "any"
+                                    }`}
+                                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                      answers.listingType === option.value
+                                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                                    }`}
+                                  >
+                                    <RadioGroupItem
+                                      value={option.value}
+                                      id={`listingType-${
+                                        option.value || "any"
+                                      }`}
+                                      className="sr-only"
+                                    />
+                                    <Icon
+                                      className={`h-6 w-6 ${
+                                        answers.listingType === option.value
+                                          ? "text-emerald-600"
+                                          : "text-slate-400"
+                                      }`}
+                                    />
+                                    <span className="text-sm font-medium text-center">
+                                      {option.label}
+                                    </span>
+                                  </Label>
+                                );
+                              })}
+                            </RadioGroup>
+                          </div>
+
+                          <Button
+                            type="submit"
+                            size="lg"
+                            className="w-full gap-2 bg-slate-900 hover:bg-slate-800 h-14 text-base rounded-xl"
+                            disabled={
+                              !answers.lifestyle.trim() ||
+                              !answers.purpose ||
+                              !answers.priority
+                            }
+                          >
+                            <Search className="h-5 w-5" />
+                            Encontrar mi hogar ideal
+                          </Button>
+                        </form>
+                      </CardContent>
+                    </Card>
                   </div>
                 </section>
               </motion.div>
@@ -1227,6 +1245,44 @@ export default function BuscarPage() {
                                     )}
                                   </div>
                                 )}
+
+                                {/* Listing Agent - Obligatorio */}
+                                {/* <div
+                                  className={cn(
+                                    "flex items-center gap-2 py-2 px-3 rounded-lg mb-3",
+                                    isFeatured
+                                      ? "bg-amber-50 border border-amber-100"
+                                      : "bg-slate-50 border border-slate-100",
+                                  )}
+                                >
+                                  <User
+                                    className={cn(
+                                      "h-4 w-4 shrink-0",
+                                      isFeatured
+                                        ? "text-amber-600"
+                                        : "text-slate-500",
+                                    )}
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p
+                                      className={cn(
+                                        "text-xs font-medium truncate",
+                                        isFeatured
+                                          ? "text-amber-800"
+                                          : "text-slate-700",
+                                      )}
+                                    >
+                                      {match.agent?.name ||
+                                        "Agente no disponible"}
+                                    </p>
+                                    {match.agent?.phone && (
+                                      <p className="text-xs text-slate-500 flex items-center gap-1">
+                                        <Phone className="h-3 w-3" />
+                                        {match.agent.phone}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div> */}
 
                                 {/* Spacer */}
                                 <div className="flex-1" />

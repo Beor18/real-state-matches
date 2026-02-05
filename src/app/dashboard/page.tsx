@@ -45,6 +45,12 @@ interface SavedProperty {
     images?: string[]
     matchScore?: number
     matchReasons?: string[]
+    agent?: {
+      name: string
+      phone?: string
+      email?: string
+      company?: string
+    }
   }
   saved_at: string
 }
