@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { LoginPromptModal } from "@/components/auth/LoginPromptModal";
 import { MatchScoreModal } from "@/components/search/MatchScoreModal";
+import { LocationAutocomplete } from "@/components/search/LocationAutocomplete";
 import { PageGuard } from "@/components/PageGuard";
 import { Button } from "@/components/ui/button";
 import {
@@ -446,8 +447,8 @@ export default function BuscarPage() {
                 <section className="py-12 md:py-16 bg-slate-50">
                   <div className="max-w-2xl mx-auto px-6">
                     {/* Form is now public - no login required to search */}
-                    <Card className="border-0 shadow-lg bg-white">
-                        <CardContent className="p-6 md:p-8">
+                    <Card className="border-0 shadow-lg bg-white overflow-visible">
+                        <CardContent className="p-6 md:p-8 overflow-visible">
                           <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Lifestyle Description */}
                             <div className="space-y-2">
@@ -477,23 +478,22 @@ export default function BuscarPage() {
                             </div>
 
                             {/* Location Preferences */}
-                            <div className="space-y-2">
+                            <div className="space-y-2" style={{ overflow: 'visible', position: 'relative', zIndex: 50 }}>
                               <Label
                                 htmlFor="location"
                                 className="text-base font-medium"
                               >
                                 ¿Tienes preferencia de zona? (opcional)
                               </Label>
-                              <Input
-                                id="location"
-                                placeholder="Ej: San Juan, Condado, Dorado, Guaynabo..."
+                              <LocationAutocomplete
                                 value={answers.location}
-                                onChange={(e) =>
+                                onChange={(value) =>
                                   setAnswers({
                                     ...answers,
-                                    location: e.target.value,
+                                    location: value,
                                   })
                                 }
+                                placeholder="Buscar ciudad o barrio en Puerto Rico..."
                               />
                             </div>
 
