@@ -297,7 +297,7 @@ export default function AdminPagesPage() {
             </p>
             <div className="flex items-center gap-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
               <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                SREIS
+                Smarlin
               </span>
               <div className="flex items-center gap-4">
                 {pages

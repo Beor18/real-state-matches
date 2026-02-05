@@ -127,7 +127,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <span className="text-white font-bold text-sm">SR</span>
             </div>
             <div>
-              <span className="font-bold text-gray-900 dark:text-white">SREIS</span>
+              <span className="font-bold text-gray-900 dark:text-white">Smarlin</span>
               <span className="text-xs text-gray-500 dark:text-gray-400 block">Admin Panel</span>
             </div>
           </Link>

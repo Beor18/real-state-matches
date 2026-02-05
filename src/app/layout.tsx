@@ -12,23 +12,23 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SREIS - Smart Real Estate Intelligence System",
+  title: "Smarlin - Tu Hogar Inteligente en Puerto Rico",
   description: "Describe tu estilo de vida ideal y nuestra IA encontrará las propiedades perfectas para ti en Puerto Rico.",
-  keywords: ["bienes raíces", "real estate", "Puerto Rico", "IA", "AI", "propiedades", "hogar", "apartamentos", "SREIS"],
-  authors: [{ name: "SREIS" }],
+  keywords: ["bienes raíces", "real estate", "Puerto Rico", "IA", "AI", "propiedades", "hogar", "apartamentos", "Smarlin"],
+  authors: [{ name: "Smarlin" }],
   icons: {
     icon: "/logo.svg",
   },
   openGraph: {
-    title: "SREIS - Smart Real Estate Intelligence System",
+    title: "Smarlin - Tu Hogar Inteligente en Puerto Rico",
     description: "Búsqueda inteligente de propiedades basada en tu estilo de vida",
     url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-    siteName: "SREIS",
+    siteName: "Smarlin",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SREIS - Smart Real Estate Intelligence System",
+    title: "Smarlin - Tu Hogar Inteligente en Puerto Rico",
     description: "Búsqueda inteligente de propiedades basada en tu estilo de vida",
   },
 };

@@ -1,4 +1,4 @@
-// Module Configuration for SREIS (Smart Real Estate Intelligence System)
+// Module Configuration for Smarlin (Smart Real Estate Intelligence System)
 // Defines all available modules that can be enabled/disabled by admin
 
 export type ModuleCategory = 'sreis-engines' | 'marketing' | 'notifications' | 'general' | 'pages'
@@ -18,7 +18,7 @@ export interface ModuleConfig {
   componentPath?: string
 }
 
-// All SREIS Modules Definition
+// All Smarlin Modules Definition
 export const MODULES: Record<string, ModuleConfig> = {
   'demand-prediction': {
     key: 'demand-prediction',
@@ -145,15 +145,15 @@ export const getAllModuleKeys = (): string[] => {
   return Object.keys(MODULES)
 }
 
-// Get SREIS engine modules only
-export const getSreisEngines = (): ModuleConfig[] => {
+// Get Smarlin engine modules only
+export const getSmarlinEngines = (): ModuleConfig[] => {
   return getModulesByCategory('sreis-engines')
 }
 
 // Category metadata for display
 export const MODULE_CATEGORIES: Record<ModuleCategory, { name: string; description: string; icon: string }> = {
   'sreis-engines': {
-    name: 'Motores SREIS',
+    name: 'Motores Smarlin',
     description: 'Los 4 motores principales de inteligencia inmobiliaria',
     icon: 'Brain'
   },

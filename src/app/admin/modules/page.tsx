@@ -106,7 +106,7 @@ export default function ModulesPage() {
           Gestión de Módulos
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Activa o desactiva los módulos SREIS según las necesidades del negocio
+          Activa o desactiva los módulos Smarlin según las necesidades del negocio
         </p>
       </div>
 
