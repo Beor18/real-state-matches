@@ -1,7 +1,7 @@
 // AI Services - Dynamic Multi-Provider Support
 // Uses the configured AI provider from admin settings
 
-import { chatCompletion, createEmbedding, cosineSimilarity, SYSTEM_PROMPTS } from '@/lib/ai-client'
+import { chatCompletionMulti, createEmbedding, cosineSimilarity, SYSTEM_PROMPTS } from '@/lib/ai-client'
 
 export interface LifestyleMatchProfile {
   idealLifeDescription: string
@@ -116,7 +116,7 @@ Ejemplos:
 `
 
   try {
-    const response = await chatCompletion(
+    const response = await chatCompletionMulti(
       [
         { role: 'system', content: SYSTEM_PROMPTS.lifestyleMatching },
         { role: 'user', content: prompt }
@@ -359,7 +359,7 @@ Responde en formato JSON:
   try {
     console.log(`Matching ${properties.length} properties with AI...`)
     
-    const response = await chatCompletion(
+    const response = await chatCompletionMulti(
       [
         { role: 'system', content: SYSTEM_PROMPTS.propertyMatching },
         { role: 'user', content: prompt }
@@ -441,7 +441,7 @@ Responde en formato JSON:
 `
 
   try {
-    const response = await chatCompletion(
+    const response = await chatCompletionMulti(
       [
         { role: 'system', content: SYSTEM_PROMPTS.viralContent },
         { role: 'user', content: prompt }
@@ -514,7 +514,7 @@ Responde en formato JSON:
 `
 
   try {
-    const response = await chatCompletion(
+    const response = await chatCompletionMulti(
       [
         { role: 'system', content: SYSTEM_PROMPTS.demandPrediction },
         { role: 'user', content: prompt }
@@ -595,7 +595,7 @@ Responde en formato JSON:
 `
 
   try {
-    const response = await chatCompletion(
+    const response = await chatCompletionMulti(
       [
         { role: 'system', content: SYSTEM_PROMPTS.demandPrediction },
         { role: 'user', content: prompt }

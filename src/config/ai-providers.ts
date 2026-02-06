@@ -106,7 +106,7 @@ export const AI_PROVIDERS: Record<AIProvider, AIProviderConfig> = {
   google: {
     id: 'google',
     name: 'Google AI (Gemini)',
-    description: 'Gemini Pro y Flash - modelos multimodales de Google',
+    description: 'Gemini 2.5/3 - modelos multimodales de Google',
     website: 'https://ai.google.dev',
     docsUrl: 'https://ai.google.dev/docs',
     apiKeyPrefix: 'AI',
@@ -116,25 +116,25 @@ export const AI_PROVIDERS: Record<AIProvider, AIProviderConfig> = {
     supportsStreaming: true,
     models: {
       chat: [
-        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Modelo más capaz de Google', contextWindow: 2000000, supportsJson: true, supportsVision: true, costPer1kTokens: 0.00125 },
-        { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Rápido y eficiente', contextWindow: 1000000, supportsJson: true, supportsVision: true, costPer1kTokens: 0.000075 },
-        { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash', description: 'Última versión experimental', contextWindow: 1000000, supportsJson: true, supportsVision: true, costPer1kTokens: 0.0001 },
+        { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Modelo más capaz de Google', contextWindow: 1048576, supportsJson: true, supportsVision: true, costPer1kTokens: 0.00125 },
+        { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Rápido y eficiente', contextWindow: 1048576, supportsJson: true, supportsVision: true, costPer1kTokens: 0.000075 },
+        { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', description: 'Última generación - experimental', contextWindow: 1048576, supportsJson: true, supportsVision: true, costPer1kTokens: 0.0001 },
       ],
       embedding: [
         { id: 'text-embedding-004', name: 'Text Embedding 004', description: 'Embeddings de Google', contextWindow: 2048, costPer1kTokens: 0.00001 },
       ],
       analysis: [
-        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Análisis con contexto largo', contextWindow: 2000000, supportsJson: true, costPer1kTokens: 0.00125 },
+        { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Análisis con contexto largo', contextWindow: 1048576, supportsJson: true, costPer1kTokens: 0.00125 },
       ],
       content: [
-        { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Generación rápida', contextWindow: 1000000, supportsJson: true, costPer1kTokens: 0.000075 },
+        { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Generación rápida', contextWindow: 1048576, supportsJson: true, costPer1kTokens: 0.000075 },
       ],
     },
     defaultModels: {
-      chat: 'gemini-1.5-pro',
+      chat: 'gemini-2.5-flash',
       embedding: 'text-embedding-004',
-      analysis: 'gemini-1.5-pro',
-      content: 'gemini-1.5-flash',
+      analysis: 'gemini-2.5-pro',
+      content: 'gemini-2.5-flash',
     },
   },
   groq: {

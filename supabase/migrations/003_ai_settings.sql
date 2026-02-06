@@ -58,7 +58,7 @@ INSERT INTO public.ai_settings (provider, display_name, is_active, models, confi
      '{"chat": "claude-3-5-sonnet-20241022", "analysis": "claude-3-5-sonnet-20241022"}',
      '{"baseUrl": "https://api.anthropic.com"}'),
     ('google', 'Google AI (Gemini)', FALSE,
-     '{"chat": "gemini-1.5-pro", "analysis": "gemini-1.5-pro"}',
+     '{"chat": "gemini-2.5-flash", "analysis": "gemini-2.5-pro"}',
      '{"baseUrl": "https://generativelanguage.googleapis.com"}'),
     ('groq', 'Groq (Fast Inference)', FALSE,
      '{"chat": "llama-3.3-70b-versatile", "analysis": "llama-3.3-70b-versatile"}',

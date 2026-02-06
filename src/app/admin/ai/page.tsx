@@ -37,6 +37,8 @@ import {
   Layers,
   BarChart3,
   Sparkles,
+  Star,
+  AlertTriangle,
 } from 'lucide-react'
 
 interface AISettingsData {
@@ -46,6 +48,7 @@ interface AISettingsData {
   api_key: string | null
   has_key: boolean
   is_active: boolean
+  is_primary: boolean
   models: Record<string, string>
   config: Record<string, unknown>
 }
@@ -109,9 +112,14 @@ export default function AISettingsPage() {
       const data = await response.json()
       
       if (data.success) {
-        setSettings(prev => 
-          prev.map(s => s.provider === provider ? { ...s, ...data.settings } : s)
-        )
+        // Update all settings if available from API
+        if (data.allSettings) {
+          setSettings(data.allSettings)
+        } else {
+          setSettings(prev => 
+            prev.map(s => s.provider === provider ? { ...s, ...data.settings } : s)
+          )
+        }
         setApiKeyInputs(prev => ({ ...prev, [provider]: '' }))
       }
     } catch (error) {
@@ -137,22 +145,55 @@ export default function AISettingsPage() {
       const data = await response.json()
       
       if (data.success) {
-        // If activating, deactivate others in UI
-        if (isActive) {
-          setSettings(prev => 
-            prev.map(s => ({
-              ...s,
-              is_active: s.provider === provider,
-            }))
-          )
+        // Multi-provider: only toggle THIS provider, leave others unchanged
+        if (data.allSettings) {
+          setSettings(data.allSettings)
         } else {
           setSettings(prev => 
-            prev.map(s => s.provider === provider ? { ...s, is_active: false } : s)
+            prev.map(s => s.provider === provider 
+              ? { ...s, is_active: isActive, ...(isActive ? {} : { is_primary: false }) }
+              : s
+            )
           )
         }
       }
     } catch (error) {
       console.error('Error toggling provider:', error)
+    } finally {
+      setSavingProvider(null)
+    }
+  }
+
+  const handleSetPrimary = async (provider: string) => {
+    setSavingProvider(provider)
+    
+    try {
+      const response = await fetch('/api/admin/ai-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider,
+          is_primary: true,
+        }),
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        if (data.allSettings) {
+          setSettings(data.allSettings)
+        } else {
+          // Only one can be primary: update all in UI
+          setSettings(prev => 
+            prev.map(s => ({
+              ...s,
+              is_primary: s.provider === provider,
+            }))
+          )
+        }
+      }
+    } catch (error) {
+      console.error('Error setting primary provider:', error)
     } finally {
       setSavingProvider(null)
     }
@@ -201,7 +242,7 @@ export default function AISettingsPage() {
     } catch (error) {
       setTestResults(prev => ({ 
         ...prev, 
-        [provider]: { success: false, message: 'Error de conexión' } 
+        [provider]: { success: false, message: 'Error de conexion' } 
       }))
     } finally {
       setTestingProvider(null)
@@ -226,7 +267,8 @@ export default function AISettingsPage() {
     )
   }
 
-  const activeProvider = settings.find(s => s.is_active)
+  const activeProviders = settings.filter(s => s.is_active)
+  const primaryProvider = settings.find(s => s.is_primary && s.is_active)
 
   return (
     <div className="p-8">
@@ -234,27 +276,41 @@ export default function AISettingsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
           <Brain className="h-8 w-8 text-purple-600" />
-          Configuración de IA
+          Configuracion de IA
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Configura los proveedores de inteligencia artificial y sus modelos
+          Configura los proveedores de inteligencia artificial y sus modelos. Puedes activar multiples proveedores para obtener mejores resultados.
         </p>
       </div>
 
-      {/* Active Provider Status */}
+      {/* Active Providers Status */}
       <Card className="mb-8 border-2 border-purple-200 bg-purple-50/50 dark:bg-purple-900/10 dark:border-purple-800">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-xl bg-purple-600 flex items-center justify-center">
                 <Zap className="h-6 w-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Proveedor Activo</p>
-                {activeProvider ? (
-                  <p className="text-xl font-bold text-gray-900 dark:text-white">
-                    {AI_PROVIDERS[activeProvider.provider as AIProvider]?.name || activeProvider.provider}
-                  </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Proveedores Activos</p>
+                {activeProviders.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    {activeProviders.map(p => (
+                      <Badge
+                        key={p.provider}
+                        className={`gap-1 ${
+                          p.is_primary
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-green-500 text-white'
+                        }`}
+                      >
+                        {p.is_primary && <Star className="h-3 w-3" />}
+                        <Check className="h-3 w-3" />
+                        {AI_PROVIDERS[p.provider as AIProvider]?.name || p.provider}
+                        {p.is_primary && ' (Principal)'}
+                      </Badge>
+                    ))}
+                  </div>
                 ) : (
                   <p className="text-xl font-bold text-amber-600">
                     Ninguno configurado
@@ -262,13 +318,47 @@ export default function AISettingsPage() {
                 )}
               </div>
             </div>
-            {activeProvider && (
-              <Badge className="bg-green-500 gap-1">
-                <Check className="h-3 w-3" />
-                Conectado
-              </Badge>
-            )}
+            <div className="text-right">
+              <p className="text-2xl font-bold text-purple-600">{activeProviders.length}</p>
+              <p className="text-xs text-gray-500">activo{activeProviders.length !== 1 ? 's' : ''}</p>
+            </div>
           </div>
+
+          {/* Multi-provider info */}
+          {activeProviders.length > 1 && (
+            <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-800">
+              <div className="flex items-start gap-2 text-sm text-purple-700 dark:text-purple-300">
+                <Sparkles className="h-4 w-4 mt-0.5 shrink-0" />
+                <p>
+                  <strong>Modo Multi-IA activo:</strong> Las consultas se envian a {activeProviders.length} proveedores en paralelo.
+                  {primaryProvider
+                    ? ` ${AI_PROVIDERS[primaryProvider.provider as AIProvider]?.name} sintetiza las respuestas en una sola respuesta mejorada.`
+                    : ' Selecciona un proveedor principal para sintetizar las respuestas.'
+                  }
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Warning: multiple active but no primary */}
+          {activeProviders.length > 1 && !primaryProvider && (
+            <div className="mt-3 flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+              <p>
+                Selecciona un proveedor <strong>Principal</strong> para sintetizar las respuestas de los demas.
+              </p>
+            </div>
+          )}
+
+          {/* Cost warning */}
+          {activeProviders.length > 1 && (
+            <div className="mt-2 flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+              <p>
+                Cada consulta se multiplicara por {activeProviders.length} proveedores + 1 llamada de sintesis. Esto incrementa el consumo de API.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -284,16 +374,19 @@ export default function AISettingsPage() {
             <Card 
               key={providerId}
               className={`border-2 transition-all ${
-                setting?.is_active 
-                  ? 'border-purple-300 bg-purple-50/30 dark:bg-purple-900/10' 
-                  : 'border-gray-200 dark:border-gray-800'
+                setting?.is_primary
+                  ? 'border-purple-400 bg-purple-50/50 dark:bg-purple-900/20 ring-1 ring-purple-300'
+                  : setting?.is_active 
+                    ? 'border-green-300 bg-green-50/30 dark:bg-green-900/10' 
+                    : 'border-gray-200 dark:border-gray-800'
               }`}
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${
-                      setting?.is_active ? 'bg-purple-600' : 'bg-gray-200 dark:bg-gray-700'
+                      setting?.is_primary ? 'bg-purple-600' :
+                      setting?.is_active ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-700'
                     }`}>
                       <Brain className={`h-6 w-6 ${setting?.is_active ? 'text-white' : 'text-gray-500'}`} />
                     </div>
@@ -304,6 +397,18 @@ export default function AISettingsPage() {
                           <Badge variant="outline" className="text-xs gap-1">
                             <Key className="h-3 w-3" />
                             API Key
+                          </Badge>
+                        )}
+                        {setting?.is_primary && (
+                          <Badge className="bg-purple-600 text-white text-xs gap-1">
+                            <Star className="h-3 w-3" />
+                            Principal
+                          </Badge>
+                        )}
+                        {setting?.is_active && !setting?.is_primary && (
+                          <Badge className="bg-green-500 text-white text-xs gap-1">
+                            <Check className="h-3 w-3" />
+                            Activo
                           </Badge>
                         )}
                       </CardTitle>
@@ -320,16 +425,32 @@ export default function AISettingsPage() {
                       Docs
                       <ExternalLink className="h-3 w-3" />
                     </a>
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor={`active-${providerId}`} className="text-sm">
-                        {setting?.is_active ? 'Activo' : 'Inactivo'}
-                      </Label>
-                      <Switch
-                        id={`active-${providerId}`}
-                        checked={setting?.is_active || false}
-                        onCheckedChange={(checked) => handleToggleActive(providerId, checked)}
-                        disabled={isSaving || !setting?.has_key}
-                      />
+                    <div className="flex items-center gap-3">
+                      {/* Primary button - only shown when provider is active */}
+                      {setting?.is_active && !setting?.is_primary && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSetPrimary(providerId)}
+                          disabled={isSaving}
+                          className="gap-1 text-xs border-purple-300 text-purple-600 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/30"
+                        >
+                          <Star className="h-3 w-3" />
+                          Hacer Principal
+                        </Button>
+                      )}
+                      {/* Active toggle */}
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`active-${providerId}`} className="text-sm">
+                          {setting?.is_active ? 'Activo' : 'Inactivo'}
+                        </Label>
+                        <Switch
+                          id={`active-${providerId}`}
+                          checked={setting?.is_active || false}
+                          onCheckedChange={(checked) => handleToggleActive(providerId, checked)}
+                          disabled={isSaving || !setting?.has_key}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -407,7 +528,7 @@ export default function AISettingsPage() {
                         ) : (
                           <RefreshCw className="h-4 w-4" />
                         )}
-                        Probar Conexión
+                        Probar Conexion
                       </Button>
                       {testResult && (
                         <div className={`flex items-center gap-2 text-sm ${
@@ -483,7 +604,7 @@ export default function AISettingsPage() {
                         {isSaving ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : null}
-                        Guardar Configuración de Modelos
+                        Guardar Configuracion de Modelos
                       </Button>
                     </div>
                   </TabsContent>
@@ -496,4 +617,3 @@ export default function AISettingsPage() {
     </div>
   )
 }
-

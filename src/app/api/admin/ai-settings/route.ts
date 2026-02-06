@@ -51,7 +51,7 @@ export async function GET() {
   }
 }
 
-// POST - Update AI settings (activate provider, set API key, update models)
+// POST - Update AI settings (activate provider, set API key, update models, set primary)
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -73,11 +73,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { provider, api_key, models, is_active } = body as {
+    const { provider, api_key, models, is_active, is_primary } = body as {
       provider: AIProvider
       api_key?: string
       models?: Record<string, string>
       is_active?: boolean
+      is_primary?: boolean
     }
 
     if (!provider) {
@@ -99,14 +100,24 @@ export async function POST(request: NextRequest) {
     }
 
     if (is_active !== undefined) {
-      // If activating this provider, deactivate others
-      if (is_active) {
+      // Multi-provider: just toggle this provider, do NOT deactivate others
+      updateData.is_active = is_active
+
+      // If deactivating a provider that was primary, remove primary flag
+      if (!is_active) {
+        updateData.is_primary = false
+      }
+    }
+
+    if (is_primary !== undefined) {
+      if (is_primary) {
+        // Only ONE provider can be primary: unset all others first
         await supabase
           .from('ai_settings')
-          .update({ is_active: false })
+          .update({ is_primary: false })
           .neq('provider', provider)
       }
-      updateData.is_active = is_active
+      updateData.is_primary = is_primary
     }
 
     // Update the provider settings
@@ -121,8 +132,20 @@ export async function POST(request: NextRequest) {
       throw error
     }
 
-    // Clear cached config so it's reloaded
+    // Clear cached config so it's reloaded with all active providers
     clearConfigCache()
+
+    // Fetch all settings to return updated state
+    const { data: allSettings } = await supabase
+      .from('ai_settings')
+      .select('*')
+      .order('provider')
+
+    const maskedAllSettings = allSettings?.map(s => ({
+      ...s,
+      api_key: s.api_key ? maskApiKey(s.api_key) : null,
+      has_key: !!s.api_key,
+    }))
 
     return NextResponse.json({ 
       success: true, 
@@ -130,7 +153,8 @@ export async function POST(request: NextRequest) {
         ...data,
         api_key: data.api_key ? maskApiKey(data.api_key) : null,
         has_key: !!data.api_key,
-      }
+      },
+      allSettings: maskedAllSettings,
     })
   } catch (error) {
     console.error('Error updating AI settings:', error)
@@ -163,8 +187,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { provider
- } = body as { provider: AIProvider }
+    const { provider } = body as { provider: AIProvider }
 
     if (!provider) {
       return NextResponse.json({ error: 'Provider is required' }, { status: 400 })
@@ -218,4 +241,3 @@ function maskApiKey(apiKey: string): string {
   if (!apiKey || apiKey.length < 12) return '••••••••'
   return `${apiKey.slice(0, 7)}••••${apiKey.slice(-4)}`
 }
-
