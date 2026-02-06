@@ -37,6 +37,13 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
+
+// Dynamic import for Leaflet map (no SSR - Leaflet requires window)
+const PropertyMap = dynamic(
+  () => import("@/components/maps/PropertyMap"),
+  { ssr: false, loading: () => <div className="h-[300px] w-full bg-slate-100 animate-pulse rounded-lg flex items-center justify-center"><MapPin className="h-8 w-8 text-slate-300" /></div> }
+);
 
 // Broker info - TODO: Make configurable from admin
 const BROKER_INFO = {
@@ -138,7 +145,7 @@ export default function PropertyDetailPage() {
             zipCode: "",
             country: "PR",
           },
-          coordinates: null,
+          coordinates: parsed.coordinates || null,
           details: {
             propertyType: "residential",
             bedrooms: parsed.bedrooms || 0,
@@ -649,6 +656,30 @@ export default function PropertyDetailPage() {
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Map Section */}
+            {property.coordinates && (
+              <Card className="shadow-sm overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="p-4 pb-2">
+                    <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-emerald-600" />
+                      Ubicacion
+                    </h3>
+                    <p className="text-sm text-slate-500 mt-1">
+                      {property.address.street}, {property.address.city}, {property.address.state}
+                    </p>
+                  </div>
+                  <PropertyMap
+                    latitude={property.coordinates.latitude}
+                    longitude={property.coordinates.longitude}
+                    title={property.title}
+                    address={property.address.street}
+                    price={property.price}
+                  />
                 </CardContent>
               </Card>
             )}

@@ -58,6 +58,8 @@ import {
   LandPlot,
   ShoppingBag,
   Phone,
+  Brain,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +77,10 @@ interface PropertyMatch {
   amenities: string[];
   images?: string[];
   sourceProvider?: string;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  } | null;
   agent?: {
     name: string;
     phone?: string;
@@ -162,6 +168,13 @@ export default function BuscarPage() {
   const [showMatchScoreModal, setShowMatchScoreModal] = useState(false);
   const [matchScoreProperty, setMatchScoreProperty] =
     useState<PropertyMatch | null>(null);
+  const [progressInfo, setProgressInfo] = useState<{
+    step: string;
+    message: string;
+    detail: string;
+    percent: number;
+  }>({ step: 'init', message: 'Iniciando...', detail: '', percent: 0 });
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   // Restore search state from sessionStorage if returning from property detail
   useEffect(() => {
@@ -304,6 +317,7 @@ export default function BuscarPage() {
       squareFeet: match.squareFeet,
       amenities: match.amenities,
       images: match.images || [],
+      coordinates: match.coordinates || null,
       matchScore: match.matchScore,
       matchReasons: match.matchReasons,
       agent: match.agent,
@@ -319,6 +333,14 @@ export default function BuscarPage() {
     e.preventDefault();
     setStep("analyzing");
     setSearchError(null);
+    setProgressInfo({ step: 'init', message: 'Iniciando busqueda...', detail: 'Verificando configuracion', percent: 5 });
+    setElapsedSeconds(0);
+
+    // Start elapsed timer
+    const timerStart = Date.now();
+    const timerInterval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - timerStart) / 1000));
+    }, 1000);
 
     try {
       const response = await fetch("/api/ai/lifestyle", {
@@ -329,64 +351,148 @@ export default function BuscarPage() {
           priorities: answers.location,
           budget: parseFloat(answers.budget),
           location: answers.location,
-          // New fields for refined matching
           purpose: answers.purpose,
           timeline: answers.timeline,
           mainPriority: answers.priority,
-          // Property filters
           propertyType: answers.propertyType || undefined,
           listingType: answers.listingType || undefined,
         }),
       });
 
-      const data = await response.json();
+      // Check if SSE stream
+      const contentType = response.headers.get('content-type') || '';
+      
+      if (contentType.includes('text/event-stream')) {
+        // SSE streaming response
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-      if (data.success && data.matches && data.matches.length > 0) {
-        const transformedMatches = data.matches.map((match: any) => ({
-          id: match.id,
-          title: match.title,
-          address: match.address,
-          city: match.city,
-          price: match.price,
-          bedrooms: match.bedrooms || 0,
-          bathrooms: match.bathrooms || 0,
-          squareFeet: match.squareFeet || match.square_feet || 0,
-          matchScore: match.matchScore,
-          matchReasons: match.matchReasons || [],
-          amenities: Array.isArray(match.amenities) ? match.amenities : [],
-          images: match.images || [],
-          sourceProvider: match.sourceProvider,
-          agent: match.agent,
-        }));
-        setMatches(transformedMatches);
-        setProvidersQueried(data.providers?.providersQueried || []);
-        setStep("results");
-      } else if (data.code === "NO_PROVIDERS") {
-        setSearchError({
-          code: "NO_PROVIDERS",
-          message:
-            data.error || "No hay proveedores de propiedades configurados.",
-        });
-        setStep("error");
-      } else if (!data.success) {
-        setSearchError({
-          code: "API_ERROR",
-          message: data.error || "Error al procesar la búsqueda.",
-        });
-        setStep("error");
+        if (!reader) throw new Error('No response body');
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const event = JSON.parse(line.slice(6));
+
+              if (event.type === 'progress') {
+                setProgressInfo({
+                  step: event.step,
+                  message: event.message,
+                  detail: event.detail,
+                  percent: event.percent,
+                });
+              } else if (event.type === 'error') {
+                clearInterval(timerInterval);
+                setSearchError({
+                  code: event.code || 'API_ERROR',
+                  message: event.error || 'Error al procesar la busqueda.',
+                });
+                setStep('error');
+                return;
+              } else if (event.type === 'result') {
+                clearInterval(timerInterval);
+                const data = event.data;
+
+                if (data.success && data.matches && data.matches.length > 0) {
+                  const transformedMatches = data.matches.map((match: any) => ({
+                    id: match.id,
+                    title: match.title,
+                    address: match.address,
+                    city: match.city,
+                    price: match.price,
+                    bedrooms: match.bedrooms || 0,
+                    bathrooms: match.bathrooms || 0,
+                    squareFeet: match.squareFeet || match.square_feet || 0,
+                    matchScore: match.matchScore,
+                    matchReasons: match.matchReasons || [],
+                    amenities: Array.isArray(match.amenities) ? match.amenities : [],
+                    images: match.images || [],
+                    sourceProvider: match.sourceProvider,
+                    coordinates: match.coordinates || null,
+                    agent: match.agent,
+                  }));
+                  setMatches(transformedMatches);
+                  setProvidersQueried(data.providers?.providersQueried || []);
+                  setStep("results");
+                } else if (!data.success) {
+                  setSearchError({
+                    code: 'API_ERROR',
+                    message: data.error || 'Error al procesar la busqueda.',
+                  });
+                  setStep('error');
+                } else {
+                  setMatches([]);
+                  setProvidersQueried(data.providers?.providersQueried || []);
+                  setStep("results");
+                }
+              }
+            } catch (parseErr) {
+              // Skip malformed lines
+            }
+          }
+        }
       } else {
-        // No matches found but search was successful
-        setMatches([]);
-        setProvidersQueried(data.providers?.providersQueried || []);
-        setStep("results");
+        // Fallback: regular JSON response (backward compatibility)
+        clearInterval(timerInterval);
+        const data = await response.json();
+
+        if (data.success && data.matches && data.matches.length > 0) {
+          const transformedMatches = data.matches.map((match: any) => ({
+            id: match.id,
+            title: match.title,
+            address: match.address,
+            city: match.city,
+            price: match.price,
+            bedrooms: match.bedrooms || 0,
+            bathrooms: match.bathrooms || 0,
+            squareFeet: match.squareFeet || match.square_feet || 0,
+            matchScore: match.matchScore,
+            matchReasons: match.matchReasons || [],
+            amenities: Array.isArray(match.amenities) ? match.amenities : [],
+            images: match.images || [],
+            sourceProvider: match.sourceProvider,
+            coordinates: match.coordinates || null,
+            agent: match.agent,
+          }));
+          setMatches(transformedMatches);
+          setProvidersQueried(data.providers?.providersQueried || []);
+          setStep("results");
+        } else if (data.code === "NO_PROVIDERS") {
+          setSearchError({
+            code: "NO_PROVIDERS",
+            message: data.error || "No hay proveedores de propiedades configurados.",
+          });
+          setStep("error");
+        } else if (!data.success) {
+          setSearchError({
+            code: "API_ERROR",
+            message: data.error || "Error al procesar la busqueda.",
+          });
+          setStep("error");
+        } else {
+          setMatches([]);
+          setProvidersQueried(data.providers?.providersQueried || []);
+          setStep("results");
+        }
       }
     } catch (error) {
       console.error("Error:", error);
       setSearchError({
         code: "NETWORK_ERROR",
-        message: "Error de conexión. Por favor intenta de nuevo.",
+        message: "Error de conexion. Por favor intenta de nuevo.",
       });
       setStep("error");
+    } finally {
+      clearInterval(timerInterval);
     }
   };
 
@@ -810,7 +916,7 @@ export default function BuscarPage() {
               </motion.div>
             )}
 
-            {/* Analyzing Step */}
+            {/* Analyzing Step - Progressive Loading */}
             {step === "analyzing" && (
               <motion.div
                 key="analyzing"
@@ -819,20 +925,111 @@ export default function BuscarPage() {
                 exit={{ opacity: 0 }}
                 className="min-h-[60vh] flex flex-col items-center justify-center py-20"
               >
-                <div className="text-center space-y-8">
+                <div className="text-center space-y-8 max-w-lg mx-auto w-full px-4">
+                  {/* Animated icon based on current step */}
                   <div className="relative">
                     <div className="h-24 w-24 mx-auto rounded-full bg-slate-900 flex items-center justify-center">
-                      <Loader2 className="h-12 w-12 text-emerald-400 animate-spin" />
+                      {progressInfo.step === 'analyzing' ? (
+                        <Brain className="h-12 w-12 text-purple-400 animate-pulse" />
+                      ) : progressInfo.step === 'searching' || progressInfo.step === 'locations' ? (
+                        <Compass className="h-12 w-12 text-blue-400 animate-spin" style={{ animationDuration: '3s' }} />
+                      ) : progressInfo.step === 'matching' ? (
+                        <Sparkles className="h-12 w-12 text-amber-400 animate-pulse" />
+                      ) : progressInfo.step === 'found' ? (
+                        <MapPin className="h-12 w-12 text-emerald-400 animate-bounce" />
+                      ) : progressInfo.step === 'finalizing' || progressInfo.step === 'done' ? (
+                        <CheckCircle className="h-12 w-12 text-emerald-400 animate-pulse" />
+                      ) : (
+                        <Loader2 className="h-12 w-12 text-emerald-400 animate-spin" />
+                      )}
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    <h2 className="text-3xl font-bold text-slate-900">
-                      Analizando tu perfil...
-                    </h2>
-                    <p className="text-slate-500 max-w-md mx-auto">
-                      Estamos procesando tus preferencias y buscando propiedades
-                      que encajen con tu estilo de vida
-                    </p>
+
+                  {/* Dynamic message */}
+                  <div className="space-y-2">
+                    <AnimatePresence mode="wait">
+                      <motion.h2
+                        key={progressInfo.message}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.3 }}
+                        className="text-2xl font-bold text-slate-900"
+                      >
+                        {progressInfo.message}
+                      </motion.h2>
+                    </AnimatePresence>
+                    <AnimatePresence mode="wait">
+                      <motion.p
+                        key={progressInfo.detail}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-slate-500 text-sm"
+                      >
+                        {progressInfo.detail}
+                      </motion.p>
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="w-full space-y-2">
+                    <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                        initial={{ width: '0%' }}
+                        animate={{ width: `${progressInfo.percent}%` }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span>{progressInfo.percent}%</span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {elapsedSeconds < 60
+                          ? `${elapsedSeconds}s`
+                          : `${Math.floor(elapsedSeconds / 60)}m ${elapsedSeconds % 60}s`}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Step indicators */}
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
+                    {[
+                      { key: 'analyzing', label: 'Analisis IA' },
+                      { key: 'searching', label: 'Busqueda' },
+                      { key: 'matching', label: 'Matching' },
+                      { key: 'finalizing', label: 'Resultados' },
+                    ].map((s, i) => {
+                      const stepOrder = ['init', 'analyzing', 'locations', 'searching', 'found', 'matching', 'finalizing', 'done'];
+                      const currentIdx = stepOrder.indexOf(progressInfo.step);
+                      const thisIdx = stepOrder.indexOf(s.key);
+                      const isActive = progressInfo.step === s.key || 
+                        (s.key === 'searching' && (progressInfo.step === 'locations' || progressInfo.step === 'found'));
+                      const isCompleted = currentIdx > thisIdx;
+
+                      return (
+                        <div
+                          key={s.key}
+                          className={cn(
+                            "flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all",
+                            isActive && "bg-emerald-100 text-emerald-700 font-medium",
+                            isCompleted && "bg-slate-100 text-slate-500",
+                            !isActive && !isCompleted && "bg-slate-50 text-slate-300",
+                          )}
+                        >
+                          {isCompleted ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : isActive ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <div className="h-3 w-3 rounded-full border border-current" />
+                          )}
+                          {s.label}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </motion.div>
