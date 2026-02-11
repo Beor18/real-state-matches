@@ -462,12 +462,37 @@ class ZillowBridgeClient {
       'Canceled': 'off_market',
     }
 
+    // Translate PropertyType and PropertySubType to Spanish
+    const propertyTypeES: Record<string, string> = {
+      'Residential': 'Residencial',
+      'Commercial Sale': 'Comercial',
+      'Land': 'Terreno',
+      'Income (Residential)': 'Ingreso Residencial',
+    }
+    const propertySubTypeES: Record<string, string> = {
+      'Single Family Residence': 'Casa',
+      'Condominium': 'Condominio',
+      'Townhouse': 'Townhouse',
+      'Multi Family': 'Multi-familiar',
+      'Villa': 'Villa',
+      'Manufactured Home': 'Casa Prefabricada',
+    }
+
+    // Use SubType translation first (more specific), then Type translation, then raw value
+    const translatedSubType = bridgeProperty.PropertySubType
+      ? propertySubTypeES[bridgeProperty.PropertySubType]
+      : undefined
+    const translatedType = bridgeProperty.PropertyType
+      ? propertyTypeES[bridgeProperty.PropertyType]
+      : undefined
+    const displayType = translatedSubType || translatedType || bridgeProperty.PropertyType || 'Propiedad'
+
     return {
       id: `bridge-${bridgeProperty.ListingKey}`,
       sourceProvider: 'zillow_bridge',
       externalId: bridgeProperty.ListingKey,
       mlsNumber: bridgeProperty.ListingId,
-      title: `${bridgeProperty.PropertyType || 'Property'} in ${bridgeProperty.City}`,
+      title: `${displayType} en ${bridgeProperty.City}`,
       description: bridgeProperty.PublicRemarks || 'No description available',
       price: bridgeProperty.ListPrice || 0,
       address: {
@@ -482,7 +507,7 @@ class ZillowBridgeClient {
         longitude: bridgeProperty.Longitude,
       } : undefined,
       details: {
-        propertyType: bridgeProperty.PropertyType?.toLowerCase() || 'unknown',
+        propertyType: displayType.toLowerCase(),
         bedrooms: bridgeProperty.BedroomsTotal || 0,
         bathrooms,
         squareFeet: bridgeProperty.LivingArea || 0,
