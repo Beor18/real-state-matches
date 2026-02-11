@@ -235,9 +235,6 @@ class ZillowBridgeClient {
     
     // Request count
     odataParams.push('$count=true')
-    
-    // Expand media
-    odataParams.push('$expand=Media')
 
     const queryString = odataParams.join('&')
     const path = `/OData/${this.config.dataset}/Property`
@@ -275,8 +272,7 @@ class ZillowBridgeClient {
   async getListing(listingKey: string): Promise<NormalizedProperty | null> {
     try {
       const response = await this.request<BridgeProperty>(
-        `/OData/${this.config.dataset}/Property('${listingKey}')`,
-        '$expand=Media'
+        `/OData/${this.config.dataset}/Property('${listingKey}')`
       )
       return this.transformToNormalized(response)
     } catch (error) {
@@ -443,34 +439,13 @@ class ZillowBridgeClient {
       ...(bridgeProperty.WaterfrontFeatures || []),
     ]
 
-    // Get images prioritizing highest quality
-    // 1. Filter to only photos with valid URLs
-    // 2. Sort by quality score (highest first), then by order
-    // 3. Extract high-quality URLs, removing duplicates
-    const mediaItems = (bridgeProperty.Media || [])
-      .filter(m => m.MediaURL && m.MediaCategory === 'Photo')
-      .sort((a, b) => {
-        // First, prioritize by quality score
-        const qualityDiff = this.getImageQualityScore(b) - this.getImageQualityScore(a)
-        if (qualityDiff !== 0) return qualityDiff
-        // Then by order
-        return (a.Order || 0) - (b.Order || 0)
-      })
+    // Get images from Media array - use MediaURL directly, sorted by Order
+    const images: string[] = (bridgeProperty.Media || [])
+      .filter(m => m.MediaURL && (!m.MediaCategory || m.MediaCategory === 'Photo'))
+      .sort((a, b) => (a.Order || 0) - (b.Order || 0))
+      .map(m => m.MediaURL)
 
-    // Get unique high-quality image URLs
-    const seenUrls = new Set<string>()
-    const images: string[] = []
-    
-    for (const media of mediaItems) {
-      const highQualityUrl = this.getHighQualityImageUrl(media)
-      // Normalize URL for deduplication (remove trailing slashes, lowercase domain)
-      const normalizedUrl = highQualityUrl.toLowerCase().replace(/\/$/, '')
-      
-      if (!seenUrls.has(normalizedUrl)) {
-        seenUrls.add(normalizedUrl)
-        images.push(highQualityUrl)
-      }
-    }
+    console.log(`[Bridge API] Property ${bridgeProperty.ListingKey}: ${bridgeProperty.Media?.length || 0} media items, ${images.length} images extracted`)
 
     // Calculate total bathrooms
     const bathrooms = (bridgeProperty.BathroomsFull || 0) + 
