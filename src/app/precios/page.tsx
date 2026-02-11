@@ -123,7 +123,7 @@ export default function PreciosPage() {
       <Header activeItem="/precios" />
 
       {/* Main Content */}
-      <main className="pt-20">
+      <main className="pt-16">
         {/* Hero Section - Dark */}
         <section className="bg-slate-900 text-white py-16 md:py-20">
           <div className="max-w-4xl mx-auto px-6 text-center">

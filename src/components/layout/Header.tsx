@@ -9,17 +9,37 @@ import { usePageConfig } from "@/hooks/usePageConfig";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Home,
   User,
   LogOut,
   Menu,
   X,
-  ArrowRight,
   Crown,
   Bell,
   Settings,
   Shield,
 } from "lucide-react";
+
+// Reusable monogram logo component matching the KG-style design
+function SmarlinLogo() {
+  return (
+    <div className="flex items-center gap-3">
+      {/* Monogram */}
+      <div className="flex items-baseline leading-none select-none">
+        <span className="text-4xl font-serif font-light tracking-tighter text-slate-800">S</span>
+        <span className="text-4xl font-serif font-light tracking-tighter text-slate-800 -ml-0.5">M</span>
+      </div>
+      {/* Brand text */}
+      <div className="flex flex-col">
+        <span className="text-sm font-semibold tracking-[0.2em] text-slate-800 uppercase leading-tight">
+          SMARLIN
+        </span>
+        <span className="text-[9px] tracking-[0.15em] text-slate-400 uppercase leading-tight">
+          Bienes Raíces Inteligentes
+        </span>
+      </div>
+    </div>
+  );
+}
 
 interface HeaderProps {
   variant?: "default" | "minimal" | "dashboard";
@@ -83,21 +103,21 @@ export default function Header({
 
   // Header positioning and styling based on variant
   const getHeaderClasses = () => {
-    const base = "w-full z-50 border-b transition-all";
+    const base = "w-full z-50 transition-all relative";
 
     if (variant === "minimal") {
-      return `${base} bg-white/90 backdrop-blur-md border-slate-100`;
+      return `${base} bg-white/95 backdrop-blur-md`;
     }
 
     if (variant === "dashboard") {
-      return `${base} sticky top-0 bg-white/90 backdrop-blur-md border-slate-100`;
+      return `${base} sticky top-0 bg-white/95 backdrop-blur-md`;
     }
 
     // Default variant
     return `${base} fixed top-0 left-0 right-0 ${
       transparent
-        ? "bg-transparent border-transparent"
-        : "bg-white/80 backdrop-blur-xl border-slate-100"
+        ? "bg-transparent"
+        : "bg-white/95 backdrop-blur-xl"
     }`;
   };
 
@@ -110,44 +130,36 @@ export default function Header({
   if (variant === "minimal") {
     return (
       <header className={getHeaderClasses()}>
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5 w-fit">
-            <div className="h-9 w-9 rounded-lg bg-slate-900 flex items-center justify-center">
-              <Home className="h-4 w-4 text-white" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight text-slate-900">
-              SMAR<span className="text-emerald-600">LIN</span>
-            </span>
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <Link href="/" className="flex items-center w-fit">
+            <SmarlinLogo />
           </Link>
         </div>
+        {/* KG-style bottom gradient */}
+        <div className="absolute bottom-0 left-0 right-0 h-[6px] bg-gradient-to-b from-gray-300/50 to-transparent translate-y-full pointer-events-none" />
       </header>
     );
   }
 
   return (
     <header className={getHeaderClasses()}>
-      <div className="max-w-6xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-lg bg-slate-900 flex items-center justify-center">
-              <Home className="h-4 w-4 text-white" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight text-slate-900">
-              SMAR<span className="text-emerald-600">LIN</span>
-            </span>
+          <Link href="/" className="flex items-center">
+            <SmarlinLogo />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-10">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-sm transition-colors ${
+                className={`text-sm tracking-wide transition-colors ${
                   currentActiveItem === item.href
-                    ? "text-emerald-600 font-medium"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "text-slate-900 font-semibold"
+                    : "text-slate-500 hover:text-slate-800"
                 }`}
               >
                 {item.label}
@@ -165,7 +177,7 @@ export default function Header({
                     <div className="hidden md:flex items-center gap-2">
                       {/* Subscription badge */}
                       {hasSubscription && subscription && (
-                        <Badge className="gap-1 bg-emerald-600 text-white">
+                        <Badge className="gap-1 bg-slate-800 text-white">
                           <Crown className="h-3 w-3" />
                           {subscription.plan_name}
                         </Badge>
@@ -267,8 +279,8 @@ export default function Header({
                     onClick={() => setMobileMenuOpen(false)}
                     className={`px-3 py-2.5 text-sm rounded-lg transition-colors ${
                       currentActiveItem === item.href
-                        ? "bg-emerald-50 text-emerald-600 font-medium"
-                        : "text-slate-600 hover:bg-slate-50"
+                        ? "bg-slate-100 text-slate-900 font-semibold"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
                     }`}
                   >
                     {item.label}
@@ -293,7 +305,7 @@ export default function Header({
                       {/* Subscription badge mobile */}
                       {hasSubscription && subscription && (
                         <div className="px-3 py-2">
-                          <Badge className="gap-1 bg-emerald-600 text-white">
+                          <Badge className="gap-1 bg-slate-800 text-white">
                             <Crown className="h-3 w-3" />
                             {subscription.plan_name}
                           </Badge>
@@ -339,6 +351,8 @@ export default function Header({
           )}
         </AnimatePresence>
       </div>
+      {/* KG-style bottom gradient */}
+      <div className="absolute bottom-0 left-0 right-0 h-[6px] bg-gradient-to-b from-gray-300/50 to-transparent translate-y-full pointer-events-none" />
     </header>
   );
 }

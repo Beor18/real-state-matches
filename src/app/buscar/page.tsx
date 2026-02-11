@@ -25,6 +25,7 @@ import { ModuleWrapper } from "@/components/modules/ModuleWrapper";
 import EquityForecast from "@/components/reai/EquityForecast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import {
   Home,
   Search,
@@ -522,10 +523,10 @@ export default function BuscarPage() {
     >
       <div className="min-h-screen bg-white">
         {/* Header */}
-        <Header activeItem="/buscar" />
+        <Header activeItem="/buscar" variant="dashboard" />
 
         {/* Main Content */}
-        <main className="pt-20">
+        <main>
           <AnimatePresence mode="wait">
             {/* Form Step */}
             {step === "form" && (
@@ -1650,6 +1651,9 @@ export default function BuscarPage() {
           price={matchScoreProperty?.price}
           city={matchScoreProperty?.city}
         />
+
+        {/* Footer */}
+        <Footer />
       </div>
     </PageGuard>
   );

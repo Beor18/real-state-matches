@@ -11,8 +11,8 @@ import { usePageConfig } from "@/hooks/usePageConfig";
 import DemandPredictionEngine from "@/components/reai/DemandPredictionEngine";
 import EquityForecast from "@/components/reai/EquityForecast";
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import {
-  Home,
   Sparkles,
   ArrowRight,
   CheckCircle,
@@ -301,7 +301,7 @@ export default function LandingPage() {
       <Header showCTA />
 
       {/* Main Content */}
-      <main className="flex-1 pt-20">
+      <main className="flex-1 pt-16">
         {/* Hero Section - Light Background */}
         <section className="relative min-h-[75vh] flex items-center py-4 md:py-6 bg-white overflow-hidden">
           <div className="max-w-7xl mx-auto px-6 w-full">
@@ -320,7 +320,7 @@ export default function LandingPage() {
                 </Badge>
 
                 {/* Main Headline */}
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#0D172A] leading-[1.1]">
+                <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#0D172A] leading-[1.1]">
                   Encuentra tu
                   <br />
                   hogar{" "}
@@ -417,7 +417,7 @@ export default function LandingPage() {
               >
                 Cómo Funciona
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#0D172A] mb-4">
+              <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#0D172A] mb-4">
                 Tan simple como 1, 2, 3
               </h2>
               <p className="text-lg text-[#64748B] max-w-xl mx-auto">
@@ -476,7 +476,7 @@ export default function LandingPage() {
                 <Badge className="bg-[#007978]/30 text-[#64C99C] border-[#007978]/50 uppercase text-xs tracking-wider">
                   Tecnología Inteligente
                 </Badge>
-                <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+                <h2 className="font-serif text-3xl md:text-4xl font-bold leading-tight">
                   No buscas propiedades.
                   <br />
                   <span className="text-[#64C99C]">Describes tu vida.</span>
@@ -509,7 +509,7 @@ export default function LandingPage() {
           <section className="py-20 md:py-28 bg-[#F8FAFC]">
             <div className="max-w-6xl mx-auto px-6">
               <motion.div {...fadeInUp} className="text-center mb-16">
-                <h2 className="text-3xl md:text-4xl font-bold text-[#0D172A] mb-4">
+                <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#0D172A] mb-4">
                   Invierte en encontrar tu lugar
                 </h2>
                 <p className="text-lg text-[#64748B]">
@@ -601,7 +601,7 @@ export default function LandingPage() {
         <section className="py-20 md:py-28 bg-white">
           <div className="max-w-6xl mx-auto px-6">
             <motion.div {...fadeInUp} className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-[#0D172A] mb-4">
+              <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#0D172A] mb-4">
                 Lo que dicen nuestros usuarios
               </h2>
             </motion.div>
@@ -665,7 +665,7 @@ export default function LandingPage() {
                   <Sparkles className="h-3.5 w-3.5" />
                   Herramientas Pro
                 </Badge>
-                <h2 className="text-3xl md:text-4xl font-bold text-[#0D172A] mb-4">
+                <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#0D172A] mb-4">
                   Análisis profesional de mercado
                 </h2>
                 <p className="text-lg text-[#64748B] max-w-xl mx-auto">
@@ -729,7 +729,7 @@ export default function LandingPage() {
           <section className="py-20 md:py-28 bg-[#F8FAFC]">
             <div className="max-w-3xl mx-auto px-6 text-center">
               <motion.div {...fadeInUp} className="space-y-6">
-                <h2 className="text-3xl md:text-4xl font-bold text-[#0D172A]">
+                <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#0D172A]">
                   ¿Listo para encontrar
                   <br />
                   tu hogar ideal?
@@ -766,96 +766,7 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-100 bg-white">
-        <div className="max-w-6xl mx-auto px-6 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-            <div className="col-span-2 md:col-span-1">
-              <Link href="/" className="flex items-center gap-2 mb-4">
-                <div className="h-8 w-8 rounded-lg bg-[#007978] flex items-center justify-center">
-                  <Home className="h-4 w-4 text-white" />
-                </div>
-                <span className="font-semibold text-[#0D172A]">Smarlin</span>
-              </Link>
-              <p className="text-sm text-[#64748B]">
-                La forma más inteligente de encontrar tu próximo hogar.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-medium text-[#0D172A] mb-4">Producto</h4>
-              <ul className="space-y-2 text-sm text-[#64748B]">
-                {isBuscarEnabled && (
-                  <li>
-                    <Link href="/buscar" className="hover:text-[#0D172A]">
-                      Buscar Casa
-                    </Link>
-                  </li>
-                )}
-                <li>
-                  <Link href="#" className="hover:text-[#0D172A]">
-                    API
-                  </Link>
-                </li>
-                {isPreciosEnabled && (
-                  <li>
-                    <Link href="/precios" className="hover:text-[#0D172A]">
-                      Precios
-                    </Link>
-                  </li>
-                )}
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium text-[#0D172A] mb-4">Empresa</h4>
-              <ul className="space-y-2 text-sm text-[#64748B]">
-                <li>
-                  <Link href="#" className="hover:text-[#0D172A]">
-                    Sobre Nosotros
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-[#0D172A]">
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-[#0D172A]">
-                    Contacto
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium text-[#0D172A] mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-[#64748B]">
-                <li>
-                  <Link href="#" className="hover:text-[#0D172A]">
-                    Términos
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-[#0D172A]">
-                    Privacidad
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-[#0D172A]">
-                    Cookies
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-[#64748B]">
-              © {new Date().getFullYear()} Smarlin. Todos los derechos
-              reservados.
-            </p>
-            <p className="text-sm text-[#64748B]">
-              Hecho con amor en Puerto Rico
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
