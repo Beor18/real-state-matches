@@ -12,8 +12,10 @@ import type {
 interface BridgeConfig {
   accessToken: string
   serverToken: string
-  dataset: string // MLS dataset identifier (e.g., 'test', 'actris', 'crmls')
+  dataset: string // MLS dataset identifier (e.g., 'stellar', 'actris', 'crmls')
   apiUrl: string
+  defaultState?: string       // Default StateOrProvince filter (e.g., 'PR', 'FL')
+  defaultMlsStatus?: string   // Default MlsStatus filter (e.g., 'Active', 'Pending')
 }
 
 // Bridge Media item with all quality-related fields
@@ -99,16 +101,21 @@ class ZillowBridgeClient {
       serverToken: config.serverToken || '',
       dataset: config.dataset || 'test',
       apiUrl: config.apiUrl || 'https://api.bridgedataoutput.com/api/v2',
+      defaultState: config.defaultState,
+      defaultMlsStatus: config.defaultMlsStatus,
     }
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.config.apiUrl}${endpoint}`
+    // Use access_token as query parameter (required for Stellar and other datasets)
+    const separator = endpoint.includes('?') ? '&' : '?'
+    const url = `${this.config.apiUrl}${endpoint}${separator}access_token=${this.config.accessToken}`
+    
+    console.log(`[Bridge API] Full URL: ${url.replace(/access_token=[^&]+/, 'access_token=***')}`)
     
     const response = await fetch(url, {
       ...options,
       headers: {
-        'Authorization': `Bearer ${this.config.accessToken}`,
         'Content-Type': 'application/json',
         ...options.headers,
       },
@@ -130,9 +137,14 @@ class ZillowBridgeClient {
     if (params.city) {
       filters.push(`contains(tolower(City), '${params.city.toLowerCase()}')`)
     }
+    
+    // StateOrProvince: use param if provided, otherwise fall back to default from admin config
     if (params.state) {
       filters.push(`StateOrProvince eq '${params.state}'`)
+    } else if (this.config.defaultState) {
+      filters.push(`StateOrProvince eq '${this.config.defaultState}'`)
     }
+    
     if (params.zipCode) {
       filters.push(`PostalCode eq '${params.zipCode}'`)
     }
@@ -154,24 +166,31 @@ class ZillowBridgeClient {
     if (params.maxSquareFeet) {
       filters.push(`LivingArea le ${params.maxSquareFeet}`)
     }
+    
+    // MlsStatus: use param if provided, otherwise fall back to default from admin config
     if (params.status) {
       const statusMap: Record<string, string> = {
         active: 'Active',
         pending: 'Pending',
         sold: 'Closed',
       }
-      filters.push(`StandardStatus eq '${statusMap[params.status] || 'Active'}'`)
+      filters.push(`MlsStatus eq '${statusMap[params.status] || 'Active'}'`)
+    } else if (this.config.defaultMlsStatus) {
+      filters.push(`MlsStatus eq '${this.config.defaultMlsStatus}'`)
     } else {
-      filters.push("StandardStatus eq 'Active'")
+      filters.push("MlsStatus eq 'Active'")
     }
+    
     if (params.propertyType) {
       filters.push(`contains(tolower(PropertyType), '${params.propertyType.toLowerCase()}')`)
     }
 
-    const queryParams = new URLSearchParams()
+    // Build OData query string manually to preserve literal '$' in parameter names.
+    // URLSearchParams encodes '$' as '%24' which Bridge Data Output API does not recognize.
+    const odataParams: string[] = []
     
     if (filters.length > 0) {
-      queryParams.append('$filter', filters.join(' and '))
+      odataParams.push(`$filter=${encodeURIComponent(filters.join(' and '))}`)
     }
     
     // Sorting
@@ -183,27 +202,30 @@ class ZillowBridgeClient {
       }
       const sortField = sortFieldMap[params.sortBy] || 'ListPrice'
       const sortDir = params.sortOrder === 'asc' ? 'asc' : 'desc'
-      queryParams.append('$orderby', `${sortField} ${sortDir}`)
+      odataParams.push(`$orderby=${encodeURIComponent(`${sortField} ${sortDir}`)}`)
     } else {
-      queryParams.append('$orderby', 'ModificationTimestamp desc')
+      odataParams.push(`$orderby=${encodeURIComponent('ModificationTimestamp desc')}`)
     }
 
     // Pagination
     const limit = params.limit || 20
     const offset = params.offset || 0
-    queryParams.append('$top', limit.toString())
-    queryParams.append('$skip', offset.toString())
+    odataParams.push(`$top=${limit}`)
+    odataParams.push(`$skip=${offset}`)
     
     // Request count
-    queryParams.append('$count', 'true')
+    odataParams.push('$count=true')
     
     // Expand media
-    queryParams.append('$expand', 'Media')
+    odataParams.push('$expand=Media')
+
+    const queryString = odataParams.join('&')
 
     try {
-      const response = await this.request<BridgeSearchResponse>(
-        `/OData/${this.config.dataset}/Property?${queryParams.toString()}`
-      )
+      const endpoint = `/OData/${this.config.dataset}/Property?${queryString}`
+      console.log(`[Bridge API] Request: ${this.config.apiUrl}${endpoint}`)
+
+      const response = await this.request<BridgeSearchResponse>(endpoint)
 
       const properties = response.value.map(p => this.transformToNormalized(p))
 
@@ -482,7 +504,7 @@ class ZillowBridgeClient {
       } : undefined,
       listDate: bridgeProperty.OriginalEntryTimestamp || new Date().toISOString(),
       modifiedDate: bridgeProperty.ModificationTimestamp || new Date().toISOString(),
-      status: statusMap[bridgeProperty.StandardStatus] || 'active',
+      status: statusMap[bridgeProperty.MlsStatus || bridgeProperty.StandardStatus] || 'active',
     }
   }
 }
@@ -492,11 +514,15 @@ export function createZillowBridgeClient(config: {
   accessToken: string
   serverToken: string
   dataset: string
+  defaultState?: string
+  defaultMlsStatus?: string
 }): ZillowBridgeClient {
   return new ZillowBridgeClient({
     accessToken: config.accessToken,
     serverToken: config.serverToken,
     dataset: config.dataset,
+    defaultState: config.defaultState,
+    defaultMlsStatus: config.defaultMlsStatus,
   })
 }
 

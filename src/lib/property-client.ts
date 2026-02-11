@@ -149,6 +149,8 @@ function createProviderClient(settings: ProviderSettings): PropertyProviderClien
         accessToken: settings.api_key,
         serverToken: serverToken,
         dataset: settings.additional_config.dataset,
+        defaultState: settings.additional_config?.default_state,
+        defaultMlsStatus: settings.additional_config?.default_mls_status,
       })
     
     case 'realtor_rapidapi':
@@ -310,6 +312,8 @@ export async function testProviderConnection(
         accessToken: config.apiKey,
         serverToken: config.apiSecret,
         dataset: config.additionalConfig.dataset,
+        defaultState: config.additionalConfig?.default_state,
+        defaultMlsStatus: config.additionalConfig?.default_mls_status,
       })
       break
     
