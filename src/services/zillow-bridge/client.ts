@@ -106,12 +106,15 @@ class ZillowBridgeClient {
     }
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    // Use access_token as query parameter (required for Stellar and other datasets)
-    const separator = endpoint.includes('?') ? '&' : '?'
-    const url = `${this.config.apiUrl}${endpoint}${separator}access_token=${this.config.accessToken}`
+  private async request<T>(path: string, queryString?: string, options: RequestInit = {}): Promise<T> {
+    // Build URL with access_token as the FIRST query parameter (required by Bridge API)
+    // Format: /path?access_token=XXX&$filter=...&$orderby=...
+    const tokenParam = `access_token=${this.config.accessToken}`
+    const url = queryString
+      ? `${this.config.apiUrl}${path}?${tokenParam}&${queryString}`
+      : `${this.config.apiUrl}${path}?${tokenParam}`
     
-    console.log(`[Bridge API] Full URL: ${url.replace(/access_token=[^&]+/, 'access_token=***')}`)
+    console.log(`[Bridge API] URL: ${url.replace(/access_token=[^&]+/, 'access_token=***')}`)
     
     const response = await fetch(url, {
       ...options,
@@ -181,8 +184,25 @@ class ZillowBridgeClient {
       filters.push("MlsStatus eq 'Active'")
     }
     
+    // Map app property types to Stellar MLS OData filter values
     if (params.propertyType) {
-      filters.push(`contains(tolower(PropertyType), '${params.propertyType.toLowerCase()}')`)
+      const bridgeTypeMap: Record<string, string> = {
+        'house':         "PropertySubType eq 'Single Family Residence'",
+        'single_family': "PropertySubType eq 'Single Family Residence'",
+        'condo':         "PropertySubType eq 'Condominium'",
+        'townhouse':     "PropertySubType eq 'Townhouse'",
+        'multi_family':  "PropertySubType eq 'Multi Family'",
+        'apartment':     "PropertySubType eq 'Condominium'",
+        'land':          "PropertyType eq 'Land'",
+        'commercial':    "contains(tolower(PropertyType), 'commercial')",
+      }
+      const typeFilter = bridgeTypeMap[params.propertyType.toLowerCase()]
+      if (typeFilter) {
+        filters.push(typeFilter)
+      } else {
+        // Fallback: generic contains search
+        filters.push(`contains(tolower(PropertyType), '${params.propertyType.toLowerCase()}')`)
+      }
     }
 
     // Build OData query string manually to preserve literal '$' in parameter names.
@@ -220,12 +240,12 @@ class ZillowBridgeClient {
     odataParams.push('$expand=Media')
 
     const queryString = odataParams.join('&')
+    const path = `/OData/${this.config.dataset}/Property`
 
     try {
-      const endpoint = `/OData/${this.config.dataset}/Property?${queryString}`
-      console.log(`[Bridge API] Request: ${this.config.apiUrl}${endpoint}`)
+      console.log(`[Bridge API] Search: ${path}?${queryString}`)
 
-      const response = await this.request<BridgeSearchResponse>(endpoint)
+      const response = await this.request<BridgeSearchResponse>(path, queryString)
 
       const properties = response.value.map(p => this.transformToNormalized(p))
 
@@ -255,7 +275,8 @@ class ZillowBridgeClient {
   async getListing(listingKey: string): Promise<NormalizedProperty | null> {
     try {
       const response = await this.request<BridgeProperty>(
-        `/OData/${this.config.dataset}/Property('${listingKey}')?$expand=Media`
+        `/OData/${this.config.dataset}/Property('${listingKey}')`,
+        '$expand=Media'
       )
       return this.transformToNormalized(response)
     } catch (error) {
@@ -269,7 +290,8 @@ class ZillowBridgeClient {
     try {
       // Try to fetch just 1 property to test connection
       const response = await this.request<BridgeSearchResponse>(
-        `/OData/${this.config.dataset}/Property?$top=1`
+        `/OData/${this.config.dataset}/Property`,
+        '$top=1'
       )
       
       if (response.value) {
