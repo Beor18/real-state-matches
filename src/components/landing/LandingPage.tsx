@@ -104,13 +104,13 @@ function HeroMockup() {
           <div className="grid grid-cols-2 gap-3">
             {/* Property Card 1 */}
             <div className="bg-[#007978] rounded-xl p-3 text-white">
-              <div className="h-16 bg-white/20 rounded-lg mb-2" />
+              <img src="/casa-00.jpg" alt="Apartamento Centro" className="h-16 w-full object-cover rounded-lg mb-2" />
               <p className="text-xs font-medium">Apartamento Centro</p>
               <p className="text-[10px] opacity-80">92% match</p>
             </div>
             {/* Property Card 2 */}
             <div className="bg-slate-100 rounded-xl p-3">
-              <div className="h-16 bg-slate-200 rounded-lg mb-2" />
+              <img src="/casa-01.jpg" alt="Loft Moderno" className="h-16 w-full object-cover rounded-lg mb-2" />
               <p className="text-xs font-medium text-slate-700">Loft Moderno</p>
               <p className="text-[10px] text-slate-500">89% match</p>
             </div>
@@ -155,7 +155,7 @@ function FeatureMockup() {
         {/* Property Cards */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-[#007978] rounded-xl overflow-hidden">
-            <div className="h-24 bg-[#005a59]" />
+            <img src="/casa-02.jpg" alt="Condado, PR" className="h-36 w-full object-cover object-center" />
             <div className="p-3">
               <p className="text-xs font-medium text-white">Condado, PR</p>
               <p className="text-[10px] text-white/70">$1,950/mes</p>
@@ -165,7 +165,7 @@ function FeatureMockup() {
             </div>
           </div>
           <div className="bg-[#007978] rounded-xl overflow-hidden">
-            <div className="h-24 bg-[#005a59]" />
+            <img src="/casa-03.jpg" alt="Isla Verde, PR" className="h-36 w-full object-cover object-center" />
             <div className="p-3">
               <p className="text-xs font-medium text-white">Isla Verde, PR</p>
               <p className="text-[10px] text-white/70">$1,650/mes</p>
