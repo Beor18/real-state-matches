@@ -104,13 +104,21 @@ function HeroMockup() {
           <div className="grid grid-cols-2 gap-3">
             {/* Property Card 1 */}
             <div className="bg-[#007978] rounded-xl p-3 text-white">
-              <img src="/casa-00.jpg" alt="Apartamento Centro" className="h-16 w-full object-cover rounded-lg mb-2" />
+              <img
+                src="/casa-00.jpg"
+                alt="Apartamento Centro"
+                className="h-16 w-full object-cover rounded-lg mb-2"
+              />
               <p className="text-xs font-medium">Apartamento Centro</p>
               <p className="text-[10px] opacity-80">92% match</p>
             </div>
             {/* Property Card 2 */}
             <div className="bg-slate-100 rounded-xl p-3">
-              <img src="/casa-01.jpg" alt="Loft Moderno" className="h-16 w-full object-cover rounded-lg mb-2" />
+              <img
+                src="/casa-01.jpg"
+                alt="Loft Moderno"
+                className="h-16 w-full object-cover rounded-lg mb-2"
+              />
               <p className="text-xs font-medium text-slate-700">Loft Moderno</p>
               <p className="text-[10px] text-slate-500">89% match</p>
             </div>
@@ -155,7 +163,11 @@ function FeatureMockup() {
         {/* Property Cards */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-[#007978] rounded-xl overflow-hidden">
-            <img src="/casa-02.jpg" alt="Condado, PR" className="h-36 w-full object-cover object-center" />
+            <img
+              src="/casa-02.jpg"
+              alt="Condado, PR"
+              className="h-36 w-full object-cover object-center"
+            />
             <div className="p-3">
               <p className="text-xs font-medium text-white">Condado, PR</p>
               <p className="text-[10px] text-white/70">$1,950/mes</p>
@@ -165,7 +177,11 @@ function FeatureMockup() {
             </div>
           </div>
           <div className="bg-[#007978] rounded-xl overflow-hidden">
-            <img src="/casa-03.jpg" alt="Isla Verde, PR" className="h-36 w-full object-cover object-center" />
+            <img
+              src="/casa-03.jpg"
+              alt="Isla Verde, PR"
+              className="h-36 w-full object-cover object-center"
+            />
             <div className="p-3">
               <p className="text-xs font-medium text-white">Isla Verde, PR</p>
               <p className="text-[10px] text-white/70">$1,650/mes</p>
@@ -301,10 +317,20 @@ export default function LandingPage() {
       <Header showCTA />
 
       {/* Main Content */}
-      <main className="flex-1 pt-16">
-        {/* Hero Section - Light Background */}
-        <section className="relative min-h-[75vh] flex items-center py-4 md:py-6 bg-white overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6 w-full">
+      <main className="flex-1">
+        {/* Hero Section - Background Image */}
+        <section
+          className="relative min-h-[75vh] flex items-center py-4 md:py-6 overflow-hidden"
+          style={{
+            backgroundImage: "url('/background-hero.jpeg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          {/* Overlay for readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
+          <div className="relative max-w-7xl mx-auto px-6 w-full">
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
               {/* Left Column - Content */}
               <motion.div
@@ -314,18 +340,18 @@ export default function LandingPage() {
                 className="space-y-6 flex flex-col justify-center"
               >
                 {/* Badge */}
-                <Badge className="bg-[#E6F7F7] text-[#007978] border-[#007978]/20 gap-2 px-4 py-1.5">
+                <Badge className="bg-white/15 text-white border-white/30 gap-2 px-4 py-1.5 backdrop-blur-sm">
                   <Sparkles className="h-3.5 w-3.5" />
                   Impulsado por Inteligencia Artificial
                 </Badge>
 
                 {/* Main Headline */}
-                <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#0D172A] leading-[1.1]">
+                <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.1] drop-shadow-lg">
                   Encuentra tu
                   <br />
                   hogar{" "}
                   <span className="relative">
-                    <span className="text-[#007978] italic">perfecto</span>
+                    <span className="text-[#4FD1C5] italic">perfecto</span>
                     <svg
                       className="absolute -bottom-2 left-0 w-full"
                       viewBox="0 0 200 12"
@@ -333,7 +359,7 @@ export default function LandingPage() {
                     >
                       <path
                         d="M2 8C50 2 150 2 198 8"
-                        stroke="#007978"
+                        stroke="#4FD1C5"
                         strokeWidth="3"
                         strokeLinecap="round"
                       />
@@ -342,7 +368,7 @@ export default function LandingPage() {
                 </h1>
 
                 {/* Subheadline */}
-                <p className="text-lg md:text-xl text-[#64748B] max-w-lg leading-relaxed">
+                <p className="text-lg md:text-xl text-white/80 max-w-lg leading-relaxed drop-shadow">
                   Describe cómo quieres vivir y recibe propiedades que realmente
                   se adaptan a tu estilo de vida. Sin filtros complicados.
                 </p>
@@ -363,14 +389,14 @@ export default function LandingPage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="rounded-full px-8 h-12 text-base border-slate-300 text-slate-700 hover:bg-slate-50"
+                    className="rounded-full px-8 h-12 text-base border-white/40 text-white hover:bg-white/10 backdrop-blur-sm"
                   >
                     Ver cómo funciona
                   </Button>
                 </div>
 
                 {/* Trust indicator */}
-                <p className="text-sm text-[#94A3B8]">
+                <p className="text-sm text-white/60">
                   Sin tarjeta de crédito · Resultados en 2 minutos
                 </p>
               </motion.div>
@@ -523,8 +549,8 @@ export default function LandingPage() {
                   plans.length === 1
                     ? "md:grid-cols-1 max-w-md"
                     : plans.length === 2
-                    ? "md:grid-cols-2 max-w-2xl"
-                    : "md:grid-cols-3"
+                      ? "md:grid-cols-2 max-w-2xl"
+                      : "md:grid-cols-3"
                 }`}
               >
                 {plans.map((plan, index) => {
