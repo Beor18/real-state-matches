@@ -227,8 +227,13 @@ export default function BuscarContent({
 
   // Restore search state from sessionStorage if returning from property detail
   useEffect(() => {
-    if (embedMode) return; // Skip in embed mode
-    const savedState = sessionStorage.getItem("search_state");
+    let savedState: string | null = null;
+    try {
+      savedState = sessionStorage.getItem("search_state");
+    } catch {
+      // sessionStorage may not be available in iframe
+      return;
+    }
     if (savedState) {
       try {
         const parsed = JSON.parse(savedState);
@@ -243,10 +248,10 @@ export default function BuscarContent({
         sessionStorage.removeItem("search_state");
       } catch (e) {
         console.error("Error restoring search state:", e);
-        sessionStorage.removeItem("search_state");
+        try { sessionStorage.removeItem("search_state"); } catch { /* ignore */ }
       }
     }
-  }, [embedMode]);
+  }, []);
 
   // Fetch saved properties on mount if user is logged in
   useEffect(() => {
@@ -353,9 +358,7 @@ export default function BuscarContent({
     const detailPath = `/propiedad/${match.id}`;
 
     if (embedMode) {
-      // In embed mode, open in new tab
-      const fullUrl = appBaseUrl ? `${appBaseUrl}${detailPath}` : detailPath;
-      // Save property data before opening
+      // In embed mode, navigate within the iframe to the embed detail page
       try {
         const propertyData = {
           id: match.id,
@@ -382,7 +385,20 @@ export default function BuscarContent({
       } catch {
         // sessionStorage may not be available in iframe
       }
-      window.open(fullUrl, "_blank");
+      // Save search state so user can return
+      try {
+        const searchState = {
+          step,
+          answers,
+          matches,
+          providersQueried,
+          savedAt: Date.now(),
+        };
+        sessionStorage.setItem("search_state", JSON.stringify(searchState));
+      } catch {
+        // ignore
+      }
+      router.push(`/embed/propiedad/${match.id}`);
       return;
     }
 
