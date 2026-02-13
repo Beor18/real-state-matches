@@ -37,17 +37,14 @@ import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 
 // Dynamic import for Leaflet map (no SSR - Leaflet requires window)
-const PropertyMap = dynamic(
-  () => import("@/components/maps/PropertyMap"),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-[300px] w-full bg-slate-100 animate-pulse rounded-lg flex items-center justify-center">
-        <MapPin className="h-8 w-8 text-slate-300" />
-      </div>
-    ),
-  },
-);
+const PropertyMap = dynamic(() => import("@/components/maps/PropertyMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[300px] w-full bg-slate-100 animate-pulse rounded-lg flex items-center justify-center">
+      <MapPin className="h-8 w-8 text-slate-300" />
+    </div>
+  ),
+});
 
 // --------------- Types ---------------
 
@@ -207,7 +204,7 @@ export default function PropertyDetailContent({
           },
           coordinates: parsed.coordinates || null,
           details: {
-            propertyType: "residential",
+            propertyType: "residencial",
             bedrooms: parsed.bedrooms || 0,
             bathrooms: parsed.bathrooms || 0,
             squareFeet: parsed.squareFeet || 0,
@@ -355,9 +352,10 @@ export default function PropertyDetailContent({
     if (!property) return;
 
     // In embed mode, share the main app URL, not the embed URL
-    const shareUrl = embedMode && appBaseUrl
-      ? `${appBaseUrl}/propiedad/${params.id}`
-      : window.location.href;
+    const shareUrl =
+      embedMode && appBaseUrl
+        ? `${appBaseUrl}/propiedad/${params.id}`
+        : window.location.href;
     const shareText = `${property.title} - $${property.price.toLocaleString(
       "en-US",
     )}`;
@@ -405,7 +403,12 @@ export default function PropertyDetailContent({
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <div className={cn("flex items-center justify-center min-h-[60vh]", !embedMode && "pt-20")}>
+        <div
+          className={cn(
+            "flex items-center justify-center min-h-[60vh]",
+            !embedMode && "pt-20",
+          )}
+        >
           <div className="text-center space-y-4">
             <Loader2 className="h-12 w-12 animate-spin text-slate-400 mx-auto" />
             <p className="text-slate-500">Cargando propiedad...</p>
@@ -419,7 +422,12 @@ export default function PropertyDetailContent({
   if (error || !property) {
     return (
       <div className="min-h-screen bg-white">
-        <div className={cn("flex items-center justify-center min-h-[60vh]", !embedMode && "pt-20")}>
+        <div
+          className={cn(
+            "flex items-center justify-center min-h-[60vh]",
+            !embedMode && "pt-20",
+          )}
+        >
           <div className="text-center space-y-6">
             <div className="h-20 w-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
               <Home className="h-10 w-10 text-slate-400" />
@@ -432,11 +440,7 @@ export default function PropertyDetailContent({
                 {error || "No pudimos encontrar esta propiedad"}
               </p>
             </div>
-            <Button
-              onClick={handleGoBack}
-              variant="outline"
-              className="gap-2"
-            >
+            <Button onClick={handleGoBack} variant="outline" className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               Volver
             </Button>
@@ -851,7 +855,9 @@ export default function PropertyDetailContent({
 
           {/* Right Column - Contact Card */}
           <div className="lg:col-span-1">
-            <div className={cn("sticky space-y-4", embedMode ? "top-4" : "top-24")}>
+            <div
+              className={cn("sticky space-y-4", embedMode ? "top-4" : "top-24")}
+            >
               {/* Contact Card */}
               <Card
                 className={cn(
@@ -924,10 +930,7 @@ export default function PropertyDetailContent({
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Heart
-                            className={cn(
-                              "h-4 w-4",
-                              isSaved && "fill-current",
-                            )}
+                            className={cn("h-4 w-4", isSaved && "fill-current")}
                           />
                         )}
                         {isSaved ? "Guardada" : "Guardar"}
