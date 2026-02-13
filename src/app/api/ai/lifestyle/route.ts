@@ -266,7 +266,7 @@ export async function POST(request: NextRequest) {
           controller.enqueue(
             progress(
               "matching",
-              `Evaluando ${propertiesForAI.length} propiedades...`,
+              `Evaluando +2500 propiedades...`,
               `Buscando: ${keywordsStr}`,
               60,
             ),
