@@ -122,7 +122,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#007978]" />
       </div>
     )
   }
@@ -158,7 +158,7 @@ export default function DashboardPage() {
             className="space-y-4"
           >
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-2xl font-bold">
+              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#007978] to-[#005f5f] flex items-center justify-center text-white text-2xl font-bold">
                 {dbUser?.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
               </div>
               <div>
@@ -177,12 +177,12 @@ export default function DashboardPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <Card className="border-2 border-emerald-200 bg-emerald-50">
+              <Card className="border-2 border-[#007978]/20 bg-[#E6F7F7]">
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
-                        <Crown className="h-6 w-6 text-emerald-600" />
+                      <div className="h-12 w-12 rounded-full bg-[#007978]/10 flex items-center justify-center">
+                        <Crown className="h-6 w-6 text-[#007978]" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-lg text-slate-900">Desbloquea más funciones</h3>
@@ -192,7 +192,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <Link href="/precios">
-                      <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+                      <Button className="gap-2 bg-[#007978] hover:bg-[#006666]">
                         Ver Planes
                         <ArrowRight className="h-4 w-4" />
                       </Button>
@@ -224,7 +224,7 @@ export default function DashboardPage() {
                   icon={Search}
                   title="Buscar Casa"
                   description="Encuentra tu hogar ideal"
-                  color="from-emerald-500 to-teal-600"
+                  color="from-[#007978] to-[#005f5f]"
                 />
               )}
               {isPreciosEnabled && (
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                   <p>Aún no has guardado propiedades</p>
                   {isBuscarEnabled && (
                     <Link href="/buscar">
-                      <Button variant="link" className="mt-2 text-emerald-600">
+                      <Button variant="link" className="mt-2 text-[#007978]">
                         Buscar propiedades
                       </Button>
                     </Link>
@@ -294,11 +294,11 @@ export default function DashboardPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       layout
                     >
-                      <Card className="border-2 hover:border-emerald-200 hover:shadow-lg transition-all overflow-hidden">
-                        <div className="flex">
+                      <Card className="border-2 hover:border-[#007978]/30 hover:shadow-lg transition-all overflow-hidden">
+                        <div className="flex flex-col sm:flex-row">
                           {/* Image */}
                           {property.images && property.images.length > 0 ? (
-                            <div className="w-32 h-32 flex-shrink-0">
+                            <div className="w-full sm:w-36 h-44 sm:h-auto flex-shrink-0">
                               <img
                                 src={property.images[0]}
                                 alt={property.title}
@@ -306,7 +306,7 @@ export default function DashboardPage() {
                               />
                             </div>
                           ) : (
-                            <div className="w-32 h-32 flex-shrink-0 bg-slate-100 flex items-center justify-center">
+                            <div className="w-full sm:w-36 h-44 sm:h-auto flex-shrink-0 bg-slate-100 flex items-center justify-center">
                               <MapPin className="h-8 w-8 text-slate-300" />
                             </div>
                           )}
@@ -349,7 +349,7 @@ export default function DashboardPage() {
                                   {property.matchReasons[0]}
                                 </p>
                                 {property.matchReasons.length > 1 && (
-                                  <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                                  <p className="text-xs text-[#007978] mt-1 flex items-center gap-1">
                                     <Info className="h-3 w-3" />
                                     Ver {property.matchReasons.length - 1} razón(es) más
                                   </p>
@@ -358,9 +358,9 @@ export default function DashboardPage() {
                             )}
                             
                             {/* Stats */}
-                            <div className="flex items-center gap-4 mt-2 text-xs text-slate-600">
+                            <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-2 text-xs text-slate-600">
                               <span className="flex items-center gap-1">
-                                <DollarSign className="h-3 w-3 text-emerald-600" />
+                                <DollarSign className="h-3 w-3 text-[#007978]" />
                                 ${property.price.toLocaleString('en-US')}
                               </span>
                               <span className="flex items-center gap-1">
@@ -384,7 +384,6 @@ export default function DashboardPage() {
                                 variant="outline" 
                                 className="h-7 text-xs gap-1"
                                 onClick={() => {
-                                  // Store property data in sessionStorage for the detail page
                                   sessionStorage.setItem(`property_${saved.property_id}`, JSON.stringify(property))
                                   router.push(`/propiedad/${saved.property_id}`)
                                 }}
@@ -441,8 +440,8 @@ export default function DashboardPage() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-lg bg-emerald-100 flex items-center justify-center">
-                        <CreditCard className="h-6 w-6 text-emerald-600" />
+                      <div className="h-12 w-12 rounded-lg bg-[#E6F7F7] flex items-center justify-center">
+                        <CreditCard className="h-6 w-6 text-[#007978]" />
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">{subscription.plan_name}</p>
@@ -497,7 +496,7 @@ function QuickActionCard({
         whileHover={{ scale: 1.02, y: -2 }}
         transition={{ type: 'spring', stiffness: 400 }}
       >
-        <Card className="cursor-pointer border-2 hover:border-emerald-200 hover:shadow-lg transition-all h-full">
+        <Card className="cursor-pointer border-2 hover:border-[#007978]/30 hover:shadow-lg transition-all h-full">
           <CardContent className="p-6">
             <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center mb-4`}>
               <Icon className="h-6 w-6 text-white" />
