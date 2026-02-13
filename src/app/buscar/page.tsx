@@ -536,22 +536,31 @@ export default function BuscarPage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                {/* Hero Section - Dark */}
-                <section className="bg-slate-900 text-white py-16 md:py-20">
-                  <div className="max-w-4xl mx-auto px-6 text-center">
+                {/* Hero Section - Background Image */}
+                <section
+                  className="relative text-white py-16 md:py-20"
+                  style={{
+                    backgroundImage: "url('/background-hero.jpeg')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                  }}
+                >
+                  <div className="absolute inset-0 bg-black/60" />
+                  <div className="relative max-w-4xl mx-auto px-6 text-center">
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="space-y-6"
                     >
-                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                      <Badge className="bg-[#007978]/20 text-[#4FD1C5] border-[#007978]/30">
                         <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                         Búsqueda inteligente
                       </Badge>
-                      <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+                      <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight">
                         Describe tu vida.
                         <br />
-                        <span className="text-emerald-400">
+                        <span className="text-[#4FD1C5]">
                           Encuentra tu lugar.
                         </span>
                       </h1>
@@ -633,7 +642,7 @@ export default function BuscarPage() {
                             <div className="space-y-2">
                               <div className="flex items-center justify-between text-sm">
                                 <span className="text-slate-500">$30,000</span>
-                                <span className="font-semibold text-lg text-emerald-600">
+                                <span className="font-semibold text-lg text-[#007978]">
                                   $
                                   {parseInt(answers.budget).toLocaleString(
                                     "en-US",
@@ -655,7 +664,7 @@ export default function BuscarPage() {
                                     budget: e.target.value,
                                   })
                                 }
-                                className="w-full accent-emerald-600"
+                                className="w-full accent-[#007978]"
                               />
                             </div>
                           </div>
@@ -680,7 +689,7 @@ export default function BuscarPage() {
                                     htmlFor={`purpose-${option.value}`}
                                     className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                                       answers.purpose === option.value
-                                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                        ? "border-[#007978] bg-[#E6F7F7] text-[#007978]"
                                         : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                                     }`}
                                   >
@@ -692,7 +701,7 @@ export default function BuscarPage() {
                                     <Icon
                                       className={`h-6 w-6 ${
                                         answers.purpose === option.value
-                                          ? "text-emerald-600"
+                                          ? "text-[#007978]"
                                           : "text-slate-400"
                                       }`}
                                     />
@@ -723,7 +732,7 @@ export default function BuscarPage() {
                                   htmlFor={`timeline-${option.value}`}
                                   className={`flex flex-col items-center gap-1 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                                     answers.timeline === option.value
-                                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                      ? "border-[#007978] bg-[#E6F7F7] text-[#007978]"
                                       : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                                   }`}
                                 >
@@ -735,7 +744,7 @@ export default function BuscarPage() {
                                   <Clock
                                     className={`h-5 w-5 ${
                                       answers.timeline === option.value
-                                        ? "text-emerald-600"
+                                        ? "text-[#007978]"
                                         : "text-slate-400"
                                     }`}
                                   />
@@ -770,7 +779,7 @@ export default function BuscarPage() {
                                     htmlFor={`priority-${option.value}`}
                                     className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                                       answers.priority === option.value
-                                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                        ? "border-[#007978] bg-[#E6F7F7] text-[#007978]"
                                         : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                                     }`}
                                   >
@@ -782,7 +791,7 @@ export default function BuscarPage() {
                                     <Icon
                                       className={`h-6 w-6 ${
                                         answers.priority === option.value
-                                          ? "text-emerald-600"
+                                          ? "text-[#007978]"
                                           : "text-slate-400"
                                       }`}
                                     />
@@ -820,7 +829,7 @@ export default function BuscarPage() {
                                     }`}
                                     className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                                       answers.propertyType === option.value
-                                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                        ? "border-[#007978] bg-[#E6F7F7] text-[#007978]"
                                         : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                                     }`}
                                   >
@@ -834,7 +843,7 @@ export default function BuscarPage() {
                                     <Icon
                                       className={`h-6 w-6 ${
                                         answers.propertyType === option.value
-                                          ? "text-emerald-600"
+                                          ? "text-[#007978]"
                                           : "text-slate-400"
                                       }`}
                                     />
@@ -869,7 +878,7 @@ export default function BuscarPage() {
                                     }`}
                                     className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                                       answers.listingType === option.value
-                                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                        ? "border-[#007978] bg-[#E6F7F7] text-[#007978]"
                                         : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                                     }`}
                                   >
@@ -883,7 +892,7 @@ export default function BuscarPage() {
                                     <Icon
                                       className={`h-6 w-6 ${
                                         answers.listingType === option.value
-                                          ? "text-emerald-600"
+                                          ? "text-[#007978]"
                                           : "text-slate-400"
                                       }`}
                                     />
@@ -937,11 +946,11 @@ export default function BuscarPage() {
                       ) : progressInfo.step === 'matching' ? (
                         <Sparkles className="h-12 w-12 text-amber-400 animate-pulse" />
                       ) : progressInfo.step === 'found' ? (
-                        <MapPin className="h-12 w-12 text-emerald-400 animate-bounce" />
+                        <MapPin className="h-12 w-12 text-[#4FD1C5] animate-bounce" />
                       ) : progressInfo.step === 'finalizing' || progressInfo.step === 'done' ? (
-                        <CheckCircle className="h-12 w-12 text-emerald-400 animate-pulse" />
+                        <CheckCircle className="h-12 w-12 text-[#4FD1C5] animate-pulse" />
                       ) : (
-                        <Loader2 className="h-12 w-12 text-emerald-400 animate-spin" />
+                        <Loader2 className="h-12 w-12 text-[#4FD1C5] animate-spin" />
                       )}
                     </div>
                   </div>
@@ -978,7 +987,7 @@ export default function BuscarPage() {
                   <div className="w-full space-y-2">
                     <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                       <motion.div
-                        className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                        className="h-full rounded-full bg-gradient-to-r from-[#007978] to-[#4FD1C5]"
                         initial={{ width: '0%' }}
                         animate={{ width: `${progressInfo.percent}%` }}
                         transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -1015,7 +1024,7 @@ export default function BuscarPage() {
                           key={s.key}
                           className={cn(
                             "flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all",
-                            isActive && "bg-emerald-100 text-emerald-700 font-medium",
+                            isActive && "bg-[#E6F7F7] text-[#007978] font-medium",
                             isCompleted && "bg-slate-100 text-slate-500",
                             !isActive && !isCompleted && "bg-slate-50 text-slate-300",
                           )}
@@ -1072,7 +1081,7 @@ export default function BuscarPage() {
                           </p>
                           <ul className="text-sm text-slate-600 space-y-3">
                             <li className="flex items-start gap-3">
-                              <span className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-medium shrink-0">
+                              <span className="h-6 w-6 rounded-full bg-[#E6F7F7] text-[#007978] flex items-center justify-center text-xs font-medium shrink-0">
                                 1
                               </span>
                               <span>
@@ -1081,7 +1090,7 @@ export default function BuscarPage() {
                               </span>
                             </li>
                             <li className="flex items-start gap-3">
-                              <span className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-medium shrink-0">
+                              <span className="h-6 w-6 rounded-full bg-[#E6F7F7] text-[#007978] flex items-center justify-center text-xs font-medium shrink-0">
                                 2
                               </span>
                               <span>
@@ -1089,7 +1098,7 @@ export default function BuscarPage() {
                               </span>
                             </li>
                             <li className="flex items-start gap-3">
-                              <span className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-medium shrink-0">
+                              <span className="h-6 w-6 rounded-full bg-[#E6F7F7] text-[#007978] flex items-center justify-center text-xs font-medium shrink-0">
                                 3
                               </span>
                               <span>Ingresar las credenciales de API</span>
@@ -1142,12 +1151,12 @@ export default function BuscarPage() {
                         <div
                           className={`h-14 w-14 rounded-xl flex items-center justify-center ${
                             matches.length > 0
-                              ? "bg-emerald-500/20"
+                              ? "bg-[#007978]/20"
                               : "bg-white"
                           }`}
                         >
                           {matches.length > 0 ? (
-                            <CheckCircle className="h-7 w-7 text-emerald-400" />
+                            <CheckCircle className="h-7 w-7 text-[#4FD1C5]" />
                           ) : (
                             <Search className="h-7 w-7 text-slate-400" />
                           )}
@@ -1343,7 +1352,7 @@ export default function BuscarPage() {
                                       "shrink-0 text-xs cursor-pointer hover:scale-105 transition-transform",
                                       isFeatured
                                         ? "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200"
-                                        : "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200",
+                                        : "bg-[#E6F7F7] text-[#007978] border-[#007978]/20 hover:bg-[#007978]/20",
                                     )}
                                     title="Ver detalles del match"
                                   >
@@ -1407,7 +1416,7 @@ export default function BuscarPage() {
                                               "h-3.5 w-3.5 shrink-0 mt-0.5",
                                               isFeatured
                                                 ? "text-amber-500"
-                                                : "text-emerald-500",
+                                                : "text-[#007978]",
                                             )}
                                           />
                                           <span className="line-clamp-1">
@@ -1567,8 +1576,8 @@ export default function BuscarPage() {
                       <Card className="border-0 bg-slate-900 text-white shadow-xl">
                         <CardContent className="p-8">
                           <div className="flex flex-col md:flex-row items-center gap-6">
-                            <div className="h-16 w-16 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
-                              <Sparkles className="h-8 w-8 text-emerald-400" />
+                            <div className="h-16 w-16 rounded-xl bg-[#007978]/20 flex items-center justify-center shrink-0">
+                              <Sparkles className="h-8 w-8 text-[#4FD1C5]" />
                             </div>
                             <div className="flex-1 text-center md:text-left">
                               <h3 className="font-bold text-xl">
@@ -1601,8 +1610,8 @@ export default function BuscarPage() {
                           <Card className="border-0 shadow-lg bg-gradient-to-br from-slate-900 to-slate-800 text-white">
                             <CardContent className="p-8">
                               <div className="flex items-center gap-4 mb-6">
-                                <div className="h-14 w-14 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                                  <LineChart className="h-7 w-7 text-emerald-400" />
+                                <div className="h-14 w-14 rounded-xl bg-[#007978]/20 flex items-center justify-center">
+                                  <LineChart className="h-7 w-7 text-[#4FD1C5]" />
                                 </div>
                                 <div>
                                   <h3 className="text-xl font-bold">

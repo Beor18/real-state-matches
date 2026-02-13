@@ -322,7 +322,7 @@ export default function LandingPage() {
         <section
           className="relative min-h-[75vh] flex items-center py-4 md:py-6 overflow-hidden"
           style={{
-            backgroundImage: "url('/background-hero.jpeg')",
+            backgroundImage: "url('/background-hero.png')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
