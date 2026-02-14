@@ -589,9 +589,9 @@ export default function PropertyDetailContent({
                   </div>
                   <p className="flex items-center gap-2 text-slate-500">
                     <MapPin className="h-4 w-4" />
-                    {property.address.street}, {property.address.city}, ,{" "}
-                    {property.address.neighborhood}, {property.address.zipCode}
-                    {property.address.state}
+                    {property.address.street}, {property.address.city},{" "}
+                    {property.address.neighborhood},
+                    {property.address.state || property.address.country}
                   </p>
                 </div>
 
