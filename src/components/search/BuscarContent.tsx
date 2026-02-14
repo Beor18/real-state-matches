@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { LoginPromptModal } from "@/components/auth/LoginPromptModal";
 import { MatchScoreModal } from "@/components/search/MatchScoreModal";
 import { LocationAutocomplete } from "@/components/search/LocationAutocomplete";
+import { SponsorsBanner } from "@/components/search/SponsorsBanner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -1193,6 +1194,9 @@ export default function BuscarContent({
                     );
                   })}
                 </div>
+
+                {/* Sponsors Area */}
+                <SponsorsBanner />
               </div>
             </motion.div>
           )}
