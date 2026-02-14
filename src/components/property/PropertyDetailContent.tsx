@@ -574,7 +574,7 @@ export default function PropertyDetailContent({
                     <h1 className="text-2xl font-bold text-slate-900">
                       {property.title}
                     </h1>
-                    <Badge
+                    {/* <Badge
                       className={cn(
                         "shrink-0",
                         isFeatured
@@ -585,7 +585,7 @@ export default function PropertyDetailContent({
                       {property.sourceProvider === "xposure"
                         ? "Puerto Rico"
                         : property.sourceProvider}
-                    </Badge>
+                    </Badge> */}
                   </div>
                   <p className="flex items-center gap-2 text-slate-500">
                     <MapPin className="h-4 w-4" />
