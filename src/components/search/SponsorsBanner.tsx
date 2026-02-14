@@ -19,7 +19,7 @@ export function SponsorsBanner({ sponsors = SPONSORS }: SponsorsBannerProps) {
       transition={{ duration: 0.5, delay: 0.8 }}
       className="w-full mt-8 pt-6 border-t border-slate-100"
     >
-      <p className="text-[10px] uppercase tracking-widest text-slate-300 mb-3 text-center">
+      <p className="text-[10px] uppercase tracking-widest text-slate-600 mb-3 text-center">
         Patrocinado por
       </p>
 
@@ -56,8 +56,7 @@ function SponsorCard({ sponsor }: { sponsor: SponsorConfig }) {
             if (parent) {
               const fallback = document.createElement("span");
               fallback.textContent = sponsor.name.charAt(0).toUpperCase();
-              fallback.className =
-                "text-xs font-bold text-slate-400";
+              fallback.className = "text-xs font-bold text-slate-400";
               parent.appendChild(fallback);
             }
           }}
